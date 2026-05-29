@@ -1,8 +1,8 @@
 # Raspberry Pi Pico 2 – Bare-Metal RISC-V Assembly LED Blink
 
-This repository contains a minimal bare-metal LED blink application for the Raspberry Pi Pico 2, written in RISC-V assembly. The project is intended as a starting point for learning low-level RISC-V assembly programming on the RP2350 microcontroller.
+This repository contains a minimal bare-metal LED blink application for the Raspberry Pi Pico 2, written in RISC-V assembly.
 
-Both the source code and this README include references to, and excerpts from, the official RP2350 datasheet:
+Both the source code and this README include references to, and excerpts from, the official RP2350 datasheet: https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf
 
 ## Install RISC-V Toolchain
 
@@ -14,7 +14,8 @@ $ mkdir -p /home/$USER/source/tools/riscv-toolchain-15-x86_64-lin
 $ tar xf riscv-toolchain-15-x86_64-lin.tar.gz -C /home/$USER/source/tools/riscv-toolchain-15-x86_64-lin
 ```
 
-## Install OpenOCD
+## Install OpenOCD (Open On-Chip Debugger)
+https://openocd.org/doc-release/README
 
 For on-chip debugging, install the Raspberry Pi–provided OpenOCD build:
 
@@ -62,6 +63,7 @@ $ sudo udevadm trigger
 ```
 
 ### GDB
+https://sourceware.org/gdb/current/onlinedocs/gdb
 
 The `riscv32-unknown-elf-gdb` provided with `pico-sdk-tools` is compiled without TUI support, which can make interactive debugging less convenient. `gdb-multiarch` is a good alternative, as it includes full TUI support.
 
@@ -77,13 +79,12 @@ $ sudo apt install gdb-multiarch
 Connect the Raspberry Pi Pico 2 board to the Raspberry Pi Debug Probe, then connect the probe to your PC.
 Once the Pico 2 is powered, it will immediately begin executing the loaded program.
 
-
 #### Start OpenOCD
 
 Launch an OpenOCD debug server for the RP2350 RISC-V core:
 
 ```bash
-openocd -c "adapter speed 5000" -f interface/cmsis-dap.cfg -c "set USE_CORE 0" -f target/rp2350-riscv.cfg
+openocd -c "adapter speed 5000" -f interface/cmsis-dap.cfg -f target/rp2350-riscv.cfg
 ```
 
 #### Start a GDB session

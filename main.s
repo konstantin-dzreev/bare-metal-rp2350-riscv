@@ -4,6 +4,10 @@
 # 7. Resets
 .equ	RESETS_BASE, 0x40020000
 .equ	RESET_DONE, 0x08
+# Reset bits
+.equ	RESETS_RESET_PADS_BANK0_BIT, 9
+.equ	RESETS_RESET_IO_BANK0_BIT, 6
+
 
 # 9. GPIO
 .equ	IO_BANK0_BASE, 0x40028000
@@ -15,11 +19,20 @@
 .equ	GPIO_OUT_SET, 0x018
 .equ	GPIO_OUT_CLR, 0x020
 
+# 8.3.11
+.equ	ROSC_BASE, 0x400e8000
+.equ	ROSC_CTRL, ROSC_BASE
+.equ	ROSC_CTRL_RFEQ_RANGE_LOW, 0xfa4
+.equ	ROSC_CTRL_RFEQ_RANGE_MEDIUM, 0xfa5
+.equ	ROSC_CTRL_RFEQ_RANGE_HIGH, 0xfa7
+.equ	ROSC_CTRL_RFEQ_RANGE_TOOHIGH, 0xfa6
+
+
 # 9. GPIO
 .equ 	PADS_BANK0_BASE, 0x40038000
 .equ	PADS_BANK0_GPIO25, 0x68
 
-.equ	big_number, 0x00080000
+.equ	big_number, 0x00100000
 
 
 .section .text
@@ -27,8 +40,20 @@
 .align	4
 
 _start:
+	# Change ROSC freq (optional)
+	li	a0, ROSC_CTRL
+	li	a1, 0xFFF
+	lw	a2, (a0)
+	andn	a2, a2, a1
+	#li	a3, ROSC_CTRL_RFEQ_RANGE_LOW
+	#li	a3, ROSC_CTRL_RFEQ_RANGE_TOOHIGH
+	li	a3, ROSC_CTRL_RFEQ_RANGE_HIGH
+	or	a2, a2, a3
+	sw	a2, (a0)
+
+	# Take IO and PADS out of reset 
 	li	a0, RESETS_BASE + ATOMIC_CLEAR
-	li	a2, 1<<6 | 1<<9    # PADS_BANK0 and IO_BANK0
+	li	a2, 1<<RESETS_RESET_IO_BANK0_BIT | 1<<RESETS_RESET_PADS_BANK0_BIT    # PADS_BANK0 and IO_BANK0
 	sw	a2, (a0)	
 
 start:
@@ -37,9 +62,9 @@ start:
 	and	a1, a1, a2
 	bne	a1, a2, start
 
-	li	a0, IO_BANK0_BASE + GPIO25_CTRL
+	li	a0, IO_BANK0_BASE
 	li	a1, 5
-	sw	a1, (a0)
+	sw	a1, GPIO25_CTRL(a0)
 
 	li	a0, SIO_BASE
 	li	a1, 1<<25

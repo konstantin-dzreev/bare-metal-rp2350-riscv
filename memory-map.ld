@@ -2,19 +2,19 @@ OUTPUT_FORMAT(elf32-littleriscv)
 
 MEMORY
 {
-    FLASH(rx) : ORIGIN = 0x10000000, LENGTH = 4M
-    RAM(rwx)  : ORIGIN = 0x20000000, LENGTH = 520K
+	FLASH(rx) : ORIGIN = 0x10000000, LENGTH = 4M
+	RAM(rwx)  : ORIGIN = 0x20000000, LENGTH = 520K
 }
 
 /* Entry point for debugger */
 ENTRY(_start)
 
 SECTIONS {
-    .text : {
-        KEEP (*(.vector_table_block))
-        KEEP (*(.image_def_block))
-        . = ALIGN(4);
-        *(.text)
-    } > FLASH
+	.text : {
+		KEEP (*(.vector_table_block))
+		KEEP (*(.image_def_block))
+		. = ALIGN(4);
+		*(.text)
+	} > FLASH
 }
 
