@@ -1,0 +1,48 @@
+.include "include/hardware/regs/addressmap.inc"
+.include "include/hardware/regs/resets.inc"
+
+# Function: unreset_subsystems
+# Description: Takes hardware components out of reset (activates).
+#
+# Inputs:
+#   a0 = hardware component bits, see RESETS_RESET register
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0, t1
+#
+# Docs: 7.5. Subsystem resets
+#
+.global unreset_subsystems
+unreset_subsystems:
+	li	t0, RESETS_BASE + REG_ALIAS_CLR_BITS
+	sw	a0, (t0)
+
+	li	t0, RESETS_BASE
+wait_until_unreset_done:
+	lw	t1, RESETS_RESET_DONE_OFFSET(t0)
+	and	t1, t1, a0
+	bne	t1, a0, wait_until_unreset_done
+	ret
+
+# Function: reset_subsystems
+# Description: Takes hardware components into reset (deactivates).
+#
+# Inputs:
+#   a0 = hardware component bits, see RESETS_RESET register
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0
+#
+# Docs: 7.5. Subsystem resets
+#
+.global reset_subsystems
+reset_subsystems:
+	li	t0, RESETS_BASE + REG_ALIAS_SET_BITS
+	sw	a0, (t0)
+	ret

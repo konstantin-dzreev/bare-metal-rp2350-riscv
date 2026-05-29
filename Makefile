@@ -1,20 +1,23 @@
 PROJECT    = rp2350-bare-metall-riscv-blink
 FAMILY     = 0xe48bff5a  # 5.5.3. UF2 Targeting Rules
-SOURCES    = $(wildcard *.s)
-OBJECTS    = $(SOURCES:.s=.o)
+SOURCES    = $(wildcard src/*.s)
+OBJECTS    = $(patsubst src/%.s,build/%.o,$(SOURCES))
 TARGET_ELF = $(PROJECT).elf
 TARGET_UF2 = $(PROJECT).uf2
 AS         = riscv32-unknown-elf-gcc
 LD         = riscv32-unknown-elf-ld
 AS_OPTIONS = -c -g -march=rv32imac_zba_zbb_zbkb_zbs_zicsr_zifencei
-LD_OPTIONS = -T memory-map.ld
+LD_OPTIONS = -T linker/linker.ld
 
 .PHONY: all
 all: clean $(TARGET_UF2)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.elf *.uf2
+	rm -rf build *.elf *.uf2
+
+build:
+	mkdir -p build
 
 .PHONY: deploy
 deploy:
@@ -28,8 +31,8 @@ program:
 		-c "adapter speed 10000" \
 		-c "program $(TARGET_ELF) verify reset exit"
 
-%.o: %.s
-	$(AS) $(AS_OPTIONS) -o $@  $<
+build/%.o: src/%.s | build
+	$(AS) $(AS_OPTIONS) -o $@ $<
 
 $(TARGET_ELF): $(OBJECTS)
 	$(LD) $(LD_OPTIONS) -o $@ $(OBJECTS)
