@@ -6,16 +6,13 @@
 # Redistribution and use permitted under BSD 3-Clause terms.
 # See full license in THIRD_PARTY_LICENSES/PICO_SDK_LICENSE.txt
 #
-
 # =============================================================================
 # Register block : IO_BANK0
 # Version        : 1
 # Bus type       : apb
 # =============================================================================
-
 .ifndef	_HARDWARE_REGS_IO_BANK0_H
 .set	_HARDWARE_REGS_IO_BANK0_H, 1
-
 # =============================================================================
 # Register    : IO_BANK0_GPIO0_STATUS
 .equ	IO_BANK0_GPIO0_STATUS_OFFSET, 0x00000000
@@ -19699,5 +19696,4 @@
 .equ	IO_BANK0_DORMANT_WAKE_INTS5_GPIO40_LEVEL_LOW_MSB, 0
 .equ	IO_BANK0_DORMANT_WAKE_INTS5_GPIO40_LEVEL_LOW_LSB, 0
 # =============================================================================
-
 .endif # _HARDWARE_REGS_IO_BANK0_H

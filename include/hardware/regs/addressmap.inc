@@ -11,7 +11,6 @@
 .set	_ADDRESSMAP_H, 1
 
 # Register address offsets for atomic RMW aliases
-
 .equ	REG_ALIAS_RW_BITS,  0x0000
 .equ	REG_ALIAS_XOR_BITS, 0x1000
 .equ	REG_ALIAS_SET_BITS, 0x2000

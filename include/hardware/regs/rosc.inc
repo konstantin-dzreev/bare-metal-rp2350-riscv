@@ -6,16 +6,13 @@
 # Redistribution and use permitted under BSD 3-Clause terms.
 # See full license in THIRD_PARTY_LICENSES/PICO_SDK_LICENSE.txt
 #
-
 # =============================================================================
 # Register block : ROSC
 # Version        : 1
 # Bus type       : apb
 # =============================================================================
-
 .ifndef	_HARDWARE_REGS_ROSC_H
 .set	_HARDWARE_REGS_ROSC_H, 1
-
 # =============================================================================
 # Register    : ROSC_CTRL
 # Description : Ring Oscillator control
@@ -313,5 +310,4 @@
 .equ	ROSC_COUNT_MSB, 15
 .equ	ROSC_COUNT_LSB, 0
 # =============================================================================
-
 .endif # _HARDWARE_REGS_ROSC_H

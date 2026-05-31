@@ -6,7 +6,6 @@
 # Redistribution and use permitted under BSD 3-Clause terms.
 # See full license in THIRD_PARTY_LICENSES/PICO_SDK_LICENSE.txt
 #
-
 #  =============================================================================
 #  Register block : SIO
 #  Version        : 1
@@ -15,10 +14,8 @@
 #                   Provides core-local and inter-core hardware for the two
 #                   processors, with single-cycle access.
 #  =============================================================================
-
 .ifndef	_HARDWARE_REGS_SIO_H
 .set	_HARDWARE_REGS_SIO_H, 1
-
 #  =============================================================================
 #  Register    : SIO_CPUID
 #  Description : Processor core identifier
@@ -2250,5 +2247,4 @@
 .equ	SIO_TMDS_POP_DOUBLE_L2_MSB, 31
 .equ	SIO_TMDS_POP_DOUBLE_L2_LSB, 0
 #  =============================================================================
-
 .endif # _HARDWARE_REGS_SIO_H

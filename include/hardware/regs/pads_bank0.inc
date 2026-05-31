@@ -6,16 +6,13 @@
 # Redistribution and use permitted under BSD 3-Clause terms.
 # See full license in THIRD_PARTY_LICENSES/PICO_SDK_LICENSE.txt
 #
-
 # =============================================================================
 # Register block : PADS_BANK0
 # Version        : 1
 # Bus type       : apb
 # =============================================================================
-
 .ifndef	_HARDWARE_REGS_PADS_BANK0_H
 .set	_HARDWARE_REGS_PADS_BANK0_H, 1
-
 # =============================================================================
 # Register    : PADS_BANK0_VOLTAGE_SELECT
 # Description : Voltage select. Per bank control
@@ -3579,5 +3576,4 @@
 .equ	PADS_BANK0_SWD_SLEWFAST_MSB, 0
 .equ	PADS_BANK0_SWD_SLEWFAST_LSB, 0
 # =============================================================================
-
 .endif # _HARDWARE_REGS_PADS_BANK0_H
