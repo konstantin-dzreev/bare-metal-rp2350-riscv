@@ -1,28 +1,11 @@
-.equ    PICOBIN_BLOCK_MARKER_START, 0xffffded3     # 5.1.5.1. Blocks
-.equ	PICOBIN_BLOCK_MARKER_END, 0xab123579
-
-.equ	PICOBIN_BLOCK_ITEM_1BS_IMAGE_TYPE, 0x42	   # 5.9.3.1. IMAGE_DEF item
-.equ	PICOBIN_BLOCK_ITEM_1BS_VECTOR_TABLE, 0x03  # 5.9.3.3. VECTOR_TABLE item
-.equ	PICOBIN_BLOCK_ITEM_1BS_ENTRY_POINT, 0x44   # 5.9.3.4. ENTRY_POINT item
-.equ	PICOBIN_BLOCK_ITEM_2BS_LAST, 0xff          # 5.9.1. Blocks and block loops
+.include "include/boot/picobin.inc"
+.include "include/hardware/regs/addressmap.inc"
 
 # PICOBIN_IMAGE_TYPE_xxx bits definition can be found at
 # https://github.com/raspberrypi/pico-sdk/blob/master/src/common/boot_picobin_headers/include/boot/picobin.h
-.equ	PICOBIN_IMAGE_TYPE_IMAGE_TYPE_EXE, 0x1     # 5.9.3.1. IMAGE_DEF item
-.equ	PICOBIN_IMAGE_TYPE_EXE_SECURITY_S, 0x2 << 4
-.equ	PICOBIN_IMAGE_TYPE_EXE_CPU_RISCV, 0x1 << 8
-.equ	PICOBIN_IMAGE_TYPE_EXE_CHIP_RP2350, 0x1 << 12
-
-.equ	SRAM_END, 0x20082000                       # 2.2.3. SRAM
-
 
 # # VECTOR TABLE
 # .section .vector_table_block, "ax"
-
-# 3.7.4.6. Exceptions
-# All populated vectors in the vector table entries must have bit[0] set.
-# Creating a table entry with bit[0] clear generates an INVSTATE
-# fault on the first instruction of the handler corresponding to this vector
 
 # vector_table_start:
 #	.word	SRAM_END     # MSP, initial value for the main stack pointer
@@ -125,7 +108,7 @@ image_def_block_items_start:
 	# 5.9.3.1. IMAGE_DEF item
 	.byte	PICOBIN_BLOCK_ITEM_1BS_IMAGE_TYPE
 	.byte	0x01            # Block size in words
-	.hword	PICOBIN_IMAGE_TYPE_IMAGE_TYPE_EXE | PICOBIN_IMAGE_TYPE_EXE_CPU_RISCV | PICOBIN_IMAGE_TYPE_EXE_SECURITY_S | PICOBIN_IMAGE_TYPE_EXE_CHIP_RP2350
+	.hword	PICOBIN_IMAGE_TYPE_IMAGE_TYPE_EXE | (PICOBIN_IMAGE_TYPE_EXE_SECURITY_S << 4) | (PICOBIN_IMAGE_TYPE_EXE_CPU_RISCV << 8) | (PICOBIN_IMAGE_TYPE_EXE_CHIP_RP2350 << 12)
 
 	# # BLOCK ITEM: Vector table (optional)
 	# .byte   PICOBIN_BLOCK_ITEM_1BS_VECTOR_TABLE
