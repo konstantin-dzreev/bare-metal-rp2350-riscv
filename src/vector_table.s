@@ -1,12 +1,16 @@
 # VECTOR TABLE
 # 3.8.4. Interrupts and exceptions
 
+.include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/rvcsr.inc"
 .include "include/hardware/regs/sio.inc"
-.include "include/hardware/regs/addressmap.inc"
+.include "include/hardware/regs/timer.inc"
 
 .section .vector_table_block, "ax"
 .align	6 # 64 bytes
+
+.option push
+.option norvc # Disables generation of RVC (Compressed) instructions
 
 .global	vector_table_start
 vector_table_start:
@@ -80,6 +84,7 @@ external_interrupt_table_start:
 	j	irq_catchall_handler	# IRQ 51, SPAREIRQ_IRQ_5
 external_interrupt_table_end:
 
+.option	pop
 
 machine_catchall_handler:
 	mret
@@ -104,13 +109,6 @@ machine_external_interrupt_handler:
 	sw	t2,  8(sp)
 	sw	t3, 12(sp)
 
-#--------- HACK -------------
-	li	t0, SIO_BASE
-	li	t1, 1 << 25
-	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-#--------- HACK -------------
-
-
 loop:
 	csrr	t0, RVCSR_MEINEXT_OFFSET		# MEINEXT value
 	li	t1, RVCSR_MEINEXT_NOIRQ_BITS		# IRQ MASK
@@ -125,6 +123,13 @@ loop:
 
 	j	loop
 done:
+
+# #--------- HACK -------------
+# 	li	t0, SIO_BASE
+# 	li	t1, 1 << 25
+# 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
+# #--------- HACK -------------
+
 	lw	t0,  0(sp)			# Restore TMP registers
 	lw	t1,  4(sp)
 	lw	t2,  8(sp)
@@ -135,9 +140,11 @@ done:
 
 
 irq_catchall_handler:
-	j	irq_0_handler
+	#j	irq_0_handler
 	ret
 
+
+.equ	timer_delay, 100000
 
 irq_0_handler:
 	addi	sp, sp, -16			# Store TMP registers
@@ -146,24 +153,33 @@ irq_0_handler:
 	sw	t2,  8(sp)
 	sw	t3, 12(sp)
 
-#--------- HACK -------------
-	li	t0, SIO_BASE
-	li	t1, 1 << 25
-	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-#--------- HACK -------------
+	li	t0, TIMER0_BASE			# clear ALARM0
+	li	t1, TIMER_INTR_ALARM_0_BITS
+	sw	t1, TIMER_INTR_OFFSET(t0)
 
+	lw	t1, TIMER_TIMELR_OFFSET(t0)		# next Alarm
+	li	t2, timer_delay
+	add	t1, t1, t2
+	sw	t1, TIMER_ALARM0_OFFSET(t0)
 
+# #--------- HACK -------------
 # 	li	t0, SIO_BASE
 # 	li	t1, 1 << 25
-# 	lw	t2, SIO_GPIO_IN_OFFSET(t0)
-# 	and	t2, t2, t1
-# 	beqz	t2, turn_on
-# 	sw	t1, SIO_GPIO_OUT_CLR_OFFSET(t0)
-# 	j	done1
-# turn_on:
 # 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
+# #--------- HACK -------------
+
+	li	t0, SIO_BASE
+	li	t1, 1 << 25
+	lw	t2, SIO_GPIO_OUT_OFFSET(t0)
+	and	t2, t2, t1
+	beqz	t2, turn_on
+	sw	t1, SIO_GPIO_OUT_CLR_OFFSET(t0)
+	j	done1
+turn_on:
+	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
 
 done1:
+
 	lw	t0,  0(sp)			# Restore TMP registers
 	lw	t1,  4(sp)
 	lw	t2,  8(sp)

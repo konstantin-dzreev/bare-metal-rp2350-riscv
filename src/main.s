@@ -66,7 +66,7 @@ _start:
 
 	li	t0, TIMER0_BASE
 	lw	t1, TIMER_TIMELR_OFFSET(t0)
-	li	t2, 1000000
+	li	t2, 100000
 	add	t1, t1, t2
 	sw	t1, TIMER_ALARM0_OFFSET(t0)
 
