@@ -11,16 +11,16 @@
 .global	vector_table_start
 vector_table_start:
 	j	machine_exception_handler		# Cause 00, Exceptions
-	j	machine_external_interrupt_handler					# Cause 01, Reserved
-	j	machine_external_interrupt_handler					# Cause 02, Reserved
+	j	machine_catchall_handler		# Cause 01, Reserved
+	j	machine_catchall_handler		# Cause 02, Reserved
 	j	machine_software_interrupt_handler	# Cause 03, Software Interrupts
-	j	machine_external_interrupt_handler					# Cause 04, Reserved
-	j	machine_external_interrupt_handler					# Cause 05, Reserved
-	j	machine_external_interrupt_handler					# Cause 06, Reserved
+	j	machine_catchall_handler		# Cause 04, Reserved
+	j	machine_catchall_handler		# Cause 05, Reserved
+	j	machine_catchall_handler		# Cause 06, Reserved
 	j	machine_timer_interrupt_handler	# Cause 07, Timer
-	j	machine_external_interrupt_handler					# Cause 08, Reserved
-	j	machine_external_interrupt_handler					# Cause 09, Reserved
-	j	machine_external_interrupt_handler					# Cause 10, Reserved
+	j	machine_catchall_handler		# Cause 08, Reserved
+	j	machine_catchall_handler		# Cause 09, Reserved
+	j	machine_catchall_handler		# Cause 10, Reserved
 	j	machine_external_interrupt_handler	# Cause 11, External Interrupts
 vector_table_end:
 
@@ -79,6 +79,10 @@ external_interrupt_table_start:
 	j	irq_catchall_handler	# IRQ 50, SPAREIRQ_IRQ_4
 	j	irq_catchall_handler	# IRQ 51, SPAREIRQ_IRQ_5
 external_interrupt_table_end:
+
+
+machine_catchall_handler:
+	mret
 
 
 machine_exception_handler:
