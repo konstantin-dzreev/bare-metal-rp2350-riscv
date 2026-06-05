@@ -116,3 +116,4 @@ continue
 - Linker: https://sourceware.org/binutils/docs/ld/
 - Picotool: https://github.com/raspberrypi/picotool
 - Style guide: https://opentitan.org/book/doc/contributing/style_guides/asm_coding_style.html
+- Interrupts: https://dannasman.github.io/hazard3-interrupts.html

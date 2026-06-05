@@ -31,12 +31,6 @@ image_def_block_items_start:
 	.byte	0x01          # Block size in words
 	.hword	PICOBIN_IMAGE_TYPE_IMAGE_TYPE_EXE | (PICOBIN_IMAGE_TYPE_EXE_SECURITY_S << PICOBIN_IMAGE_TYPE_EXE_SECURITY_LSB) | (PICOBIN_IMAGE_TYPE_EXE_CPU_RISCV << PICOBIN_IMAGE_TYPE_EXE_CPU_LSB) | (PICOBIN_IMAGE_TYPE_EXE_CHIP_RP2350 << PICOBIN_IMAGE_TYPE_EXE_CHIP_LSB)
 
-	# # BLOCK ITEM: Vector table (optional)
-	# .byte   PICOBIN_BLOCK_ITEM_1BS_VECTOR_TABLE
-	# .byte   0x02          # Block size in words   
-	# .hword  0x00          # pad
-	# .word   vector_table_start
-
 	# BLOCK ITEM: Entry point (optional)
 	.byte	PICOBIN_BLOCK_ITEM_1BS_ENTRY_POINT
 	.byte	0x03          # Block size in words

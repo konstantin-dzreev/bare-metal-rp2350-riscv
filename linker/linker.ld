@@ -11,8 +11,8 @@ ENTRY(_start)
 
 SECTIONS {
 	.text : {
-		KEEP (*(.vector_table_block))
 		KEEP (*(.image_def_block))
+		KEEP (*(.vector_table_block))
 		. = ALIGN(4);
 		*(.text)
 	} > FLASH
