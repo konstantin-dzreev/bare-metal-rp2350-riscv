@@ -86,6 +86,7 @@ external_interrupt_table_end:
 
 .option	pop
 
+
 machine_catchall_handler:
 	mret
 
@@ -123,13 +124,6 @@ loop:
 
 	j	loop
 done:
-
-# #--------- HACK -------------
-# 	li	t0, SIO_BASE
-# 	li	t1, 1 << 25
-# 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-# #--------- HACK -------------
-
 	lw	t0,  0(sp)			# Restore TMP registers
 	lw	t1,  4(sp)
 	lw	t2,  8(sp)
@@ -140,14 +134,13 @@ done:
 
 
 irq_catchall_handler:
-	#j	irq_0_handler
 	ret
 
 
-.equ	timer_delay, 100000
+.equ	timer_delay, 500000
 
 irq_0_handler:
-	addi	sp, sp, -16			# Store TMP registers
+	addi	sp, sp, -16			# store TMP registers
 	sw	t0,  0(sp)
 	sw	t1,  4(sp)
 	sw	t2,  8(sp)
@@ -157,18 +150,12 @@ irq_0_handler:
 	li	t1, TIMER_INTR_ALARM_0_BITS
 	sw	t1, TIMER_INTR_OFFSET(t0)
 
-	lw	t1, TIMER_TIMELR_OFFSET(t0)		# next Alarm
+	lw	t1, TIMER_TIMELR_OFFSET(t0)		# time for the next Alarm
 	li	t2, timer_delay
 	add	t1, t1, t2
 	sw	t1, TIMER_ALARM0_OFFSET(t0)
 
-# #--------- HACK -------------
-# 	li	t0, SIO_BASE
-# 	li	t1, 1 << 25
-# 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-# #--------- HACK -------------
-
-	li	t0, SIO_BASE
+	li	t0, SIO_BASE			# blink LED
 	li	t1, 1 << 25
 	lw	t2, SIO_GPIO_OUT_OFFSET(t0)
 	and	t2, t2, t1
@@ -180,7 +167,7 @@ turn_on:
 
 done1:
 
-	lw	t0,  0(sp)			# Restore TMP registers
+	lw	t0,  0(sp)			# restore TMP registers
 	lw	t1,  4(sp)
 	lw	t2,  8(sp)
 	lw	t3, 12(sp)

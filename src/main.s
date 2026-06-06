@@ -1,4 +1,5 @@
 .include "include/hardware/regs/addressmap.inc"
+.include "include/hardware/regs/clocks.inc"
 .include "include/hardware/regs/io_bank0.inc"
 .include "include/hardware/regs/pads_bank0.inc"
 .include "include/hardware/regs/rosc.inc"
@@ -6,10 +7,11 @@
 .include "include/hardware/regs/sio.inc"
 .include "include/hardware/regs/ticks.inc"
 .include "include/hardware/regs/timer.inc"
+.include "include/hardware/regs/xosc.inc"
 
 .include "src/lib/reset.s"
 
-.equ	big_number, 0x00100000
+.equ	big_number, 0x00400000
 
 .section	.text
 .global	_start
@@ -43,21 +45,65 @@ _start:
 	csrw	RVCSR_MEIEA_OFFSET, t0		# enable IRQ-0, Timer alarm 0
 
 
-	#-------------------
+	# Activate periferals
+	li	a0, RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS | RESETS_RESET_TIMER0_BITS
+	call	unreset_subsystems
 
+
+	# #-------------------
 	# # Change ROSC freq (optional)
+	# #-------------------
 	# li	a0, ROSC_BASE
 	# li	a1, 0xFFF
 	# lw	a2, ROSC_CTRL_OFFSET(a0)
 	# andn	a2, a2, a1
-	# li	a3, ROSC_CTRL_FREQ_RANGE_VALUE_HIGH
+	# #li	a3, ROSC_CTRL_FREQ_RANGE_VALUE_LOW
+	# li	a3, ROSC_CTRL_FREQ_RANGE_VALUE_TOOHIGH
 	# or	a2, a2, a3
 	# sw	a2, ROSC_CTRL_OFFSET(a0)
 
+	#-------------------
+	# Crystal oscillator (XOSC)
+	#-------------------
 
-	# Activate IO_BANK0 and PADS_BANK0 subsystems
-	li	a0, RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS | RESETS_RESET_TIMER0_BITS
-	call	unreset_subsystems
+	# Enable XOSC
+	li	t0, XOSC_BASE
+
+	# 8.2.4. Startup delay
+	li	t1, 200			# Mhhh... with recommended (12Mhz * 1ms) / 256 = 47 my pico-2 fails to start in 50% cases 
+	sw	t1, XOSC_STARTUP_OFFSET(t0)
+
+	# Start the XOSC
+	li	t1, (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB) | XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
+	sw	t1, XOSC_CTRL_OFFSET(t0)
+
+wait_for_stable_xosc:
+	lw	t1, XOSC_STATUS_OFFSET(t0)
+	li	t2, XOSC_STATUS_STABLE_BITS
+	and	t1, t1, t2
+	beqz	t1, wait_for_stable_xosc
+
+
+	# Switch CLK_REF clock to use XOSC
+	li	t0, CLOCKS_BASE
+	li	t1, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC
+	sw	t1, CLOCKS_CLK_REF_CTRL_OFFSET(t0)
+
+wait_for_clk_ref_to_switch:
+	lw	t2, CLOCKS_CLK_REF_SELECTED_OFFSET(t0)
+	li	t1, 1 << CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC
+	and	t2, t2, t1
+	beqz	t2, wait_for_clk_ref_to_switch
+
+	# Switch CLK_SYS  to use CLK_REF clock
+	li	t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+
+wait_for_clk_sys_to_switch:
+	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)
+	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF
+	and	t2, t2, t1
+	beqz	t2, wait_for_clk_sys_to_switch
 
 
 	#-------------------
@@ -66,23 +112,25 @@ _start:
 
 	li	t0, TIMER0_BASE
 	lw	t1, TIMER_TIMELR_OFFSET(t0)
-	li	t2, 100000
+	li	t2, 500000
 	add	t1, t1, t2
 	sw	t1, TIMER_ALARM0_OFFSET(t0)
 
 	li	t2, TIMER_INTE_ALARM_0_BITS		# enable alarm interrupt
 	sw	t2, TIMER_INTE_OFFSET(t0)
 
-
 	#-------------------
 	# Enable Timer0 Ticks: 8.5 Tick generators
 	#-------------------
 
-	# li	t0, TICKS_BASE
-	# li	t1, TICKS_TIMER0_CTRL_RUNNING_BITS
-	# sw	t1, TICKS_TIMER0_CTRL_OFFSET(t0)
+	li	t0, TICKS_BASE
+	li	t1, TICKS_TIMER0_CTRL_ENABLE_BITS
+	sw	t1, TICKS_TIMER0_CTRL_OFFSET(t0)
 
 
+	# configure ticks to fire every 1 mks or every 12 SYS_CLK cycles at 12 MHz
+	li	t1, 12
+	sw	t1, TICKS_TIMER0_CYCLES_OFFSET(t0)
 
 
 	# GPIO25: select function SIO
@@ -101,58 +149,29 @@ _start:
 	sw	a4, PADS_BANK0_GPIO25_OFFSET(a5)
 
 
-
-
-# #--------- HACK -------------
-# 	li	t0, SIO_BASE
-# 	li	t1, 1 << 25
-# 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-# #--------- HACK -------------
-
-
-led_loop:
-	call	pause
-
-	#li	s0, TIMER0_BASE
-	#lw	s1, TIMER_INTE_OFFSET(s0)
-	#lw	s1, TIMER_INTR_OFFSET(s0)
-	#lw	s1, TIMER_ARMED_OFFSET(s0)
-	#lw	s1, TIMER_TIMELR_OFFSET(s0)
-
-# 	csrr	s1, RVCSR_MEIPA_OFFSET
-
-# 	andi	s1, s1, 16
-# 	beq	zero, s1, clear
-
-# 	sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
-# 	j	led_loop
-# clear:
-# 	sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
-# 	j	led_loop
-
-
-#----------- HACK
+# #----------- HACK
 # 	li	t0, SIO_BASE
 # 	li	t1, 1 << 25
 # 	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
 # #----------- HACK END
 
+led_loop:
 
+	# # LED on
+	# sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
+	# call	pause
 
-
-	# LED on
-	#sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
-	#call	pause
-
-	# LED off
-	#sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
-	#call	pause
+	# # LED off
+	# sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
+	# call	pause
+	# call	pause
+	# call	pause
 
 	# Loop
 	j	led_loop
 
 pause:
-	li	t0, big_number
-1:	addi	t0, t0, -1
-	bnez	t0, 1b
+	li	s0, big_number
+1:	addi	s0, s0, -1
+	bnez	s0, 1b
 	ret
