@@ -1,10 +1,10 @@
-# VECTOR TABLE
-# 3.8.4. Interrupts and exceptions
-
 .include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/rvcsr.inc"
 .include "include/hardware/regs/sio.inc"
 .include "include/hardware/regs/timer.inc"
+
+# VECTOR TABLE
+# 3.8.4. Interrupts and exceptions
 
 .section .vector_table_block, "ax"
 .align	6 # 64 bytes
@@ -137,8 +137,6 @@ irq_catchall_handler:
 	ret
 
 
-.equ	timer_delay, 500000
-
 irq_0_handler:
 	addi	sp, sp, -16			# store TMP registers
 	sw	t0,  0(sp)
@@ -151,7 +149,7 @@ irq_0_handler:
 	sw	t1, TIMER_INTR_OFFSET(t0)
 
 	lw	t1, TIMER_TIMELR_OFFSET(t0)		# time for the next Alarm
-	li	t2, timer_delay
+	li	t2, 500000
 	add	t1, t1, t2
 	sw	t1, TIMER_ALARM0_OFFSET(t0)
 
