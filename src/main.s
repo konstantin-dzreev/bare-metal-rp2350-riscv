@@ -1,15 +1,19 @@
+.include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/clocks.inc"
 .include "include/hardware/regs/io_bank0.inc"
 .include "include/hardware/regs/pads_bank0.inc"
+.include "include/hardware/regs/pll.inc"
 .include "include/hardware/regs/rosc.inc"
-.include "include/hardware/regs/rvcsr.inc"
+#.include "include/hardware/regs/rvcsr.inc"
 .include "include/hardware/regs/sio.inc"
 .include "include/hardware/regs/ticks.inc"
 .include "include/hardware/regs/timer.inc"
 .include "include/hardware/regs/xosc.inc"
-.include "src/lib/reset.s"
 
-.equ	big_number, 0x00400000
+.include "src/lib/hardware/rvcsr.s"
+.include "src/lib/hardware/reset.s"
+
+.equ	big_number, 0x0000200000
 
 .section	.text
 .global	_start
@@ -20,27 +24,90 @@ _start:
 	# interrupts
 	#-------------------
 
-	li	t0, RVCSR_MSTATUS_MIE_BITS
-	csrc	RVCSR_MSTATUS_OFFSET, t0		# disable interrupts globally
+	call	rvcsr_disable_interrupts		# disable interrupts globally
 
-	csrw	RVCSR_MIE_OFFSET, zero		# disable all machine-mode interrupts
+	call	rvcsr_disable_all_machine_interrupts	# disable all machine-mode interrupts
 
-	la	t0, vector_table_start
-	ori	t0, t0, RVCSR_MTVEC_MODE_VALUE_VECTORED	# configure vectored mode
-	csrw	RVCSR_MTVEC_OFFSET, t0		# store vector table address
+	la	a0, vector_table_start		# vector table address
+	li	a1, RVCSR_MTVEC_MODE_VALUE_VECTORED	# vectored mode
+	call	rvcsr_set_interrupt_mode		# set vectored mode interrupts
 
-	li	t0, RVCSR_MIE_MEIE_BITS		# external interrupt bits
-	csrw	RVCSR_MIE_OFFSET, t0		# enable external interrupts only
+	li	a0, RVCSR_MIE_MEIE_BITS		# external interrupts only
+	call	rvcsr_enable_machine_interrupts	# enable machine interrupts (IRQ only)
 
-	li	t0, RVCSR_MSTATUS_MIE_BITS
-	csrs	RVCSR_MSTATUS_OFFSET, t0		# enable interrupts globally
+	call	rvcsr_enable_interrupts		# enable interrupts globally
 
 	#-------------------
 	# Enable IRQ-0
 	#-------------------
 
-	li	t0, 0x00010000
-	csrw	RVCSR_MEIEA_OFFSET, t0		# enable IRQ-0, Timer alarm 0
+	# li	t0, 0x00010000
+	# csrw	RVCSR_MEIEA_OFFSET, t0		# enable IRQ-0, Timer alarm 0
+
+	# li	a0, 1
+	# li	a1, 0
+	# call	rvcsr_enable_irq_window
+
+	li	a0, 0 # IRQ0
+	call	rvcsr_enable_irq
+
+	#-------------------
+	# Activate periferals
+	#-------------------
+
+	li	a0, RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS | RESETS_RESET_TIMER0_BITS | RESETS_RESET_PLL_SYS_BITS
+	call	unreset_subsystems
+
+	#-------------------
+	# GPIO
+	#-------------------
+
+	# GPIO25: select function SIO
+	li	a0, IO_BANK0_BASE
+	li	a1, IO_BANK0_GPIO25_CTRL_FUNCSEL_VALUE_SIOB_PROC_25
+	sw	a1, IO_BANK0_GPIO25_CTRL_OFFSET(a0)
+
+	# GPIO25: enable output
+	li	a0, SIO_BASE
+	li	a1, 1 << 25
+	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
+
+	# GPIO25: clear output disable and isolation bits on its pad
+	li	a4, PADS_BANK0_GPIO25_OD_BITS | PADS_BANK0_GPIO25_ISO_BITS 
+	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
+	sw	a4, PADS_BANK0_GPIO25_OFFSET(a5)
+
+
+	# GPIO0: select function SIO
+	li	a0, IO_BANK0_BASE
+	li	a1, IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SIOB_PROC_0
+	sw	a1, IO_BANK0_GPIO0_CTRL_OFFSET(a0)
+
+	# GPIO0: enable output
+	li	a0, SIO_BASE
+	li	a1, 1 << 0
+	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
+
+	# GPIO0: clear output disable and isolation bits on its pad
+	li	a4, PADS_BANK0_GPIO0_OD_BITS | PADS_BANK0_GPIO0_ISO_BITS 
+	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
+	sw	a4, PADS_BANK0_GPIO0_OFFSET(a5)
+
+
+	# GPIO2: select function SIO
+	li	a0, IO_BANK0_BASE
+	li	a1, IO_BANK0_GPIO2_CTRL_FUNCSEL_VALUE_SIOB_PROC_2
+	sw	a1, IO_BANK0_GPIO2_CTRL_OFFSET(a0)
+
+	# GPIO2: enable output
+	li	a0, SIO_BASE
+	li	a1, 1 << 2
+	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
+
+	# GPIO2: clear output disable and isolation bits on its pad
+	li	a4, PADS_BANK0_GPIO2_OD_BITS | PADS_BANK0_GPIO2_ISO_BITS 
+	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
+	sw	a4, PADS_BANK0_GPIO2_OFFSET(a5)
 
 
 	# #-------------------
@@ -87,8 +154,12 @@ _start:
 	and	t2, t2, t1
 	beqz	t2, .L_wait_for_clk_ref_to_switch
 
-	# Switch CLK_SYS  to use CLK_REF clock
-	li	t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF
+	# switch CLK_SYS to use CLK_REF clock
+	# (preserving AUXSRC bits)
+	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_SRC_BITS
+	and	t1, t1, t2
+	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF
 	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
 
 .L_wait_for_clk_sys_to_switch:
@@ -98,11 +169,86 @@ _start:
 	beqz	t2, .L_wait_for_clk_sys_to_switch
 
 	#-------------------
-	# Activate periferals
+	# PLL
 	#-------------------
 
-	li	a0, RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS | RESETS_RESET_TIMER0_BITS
-	call	unreset_subsystems
+	# rp2350 datasheet: 8.6 PLL, page 582
+	#
+	# The programming sequence for the PLL is as follows:
+	# 1. Program the reference clock divider (is a divide by 1 in the RP2350 case).
+	# 2. Program the feedback divider.
+	# 3. Turn on the main power and VCO.
+	# 4. Wait for the VCO to achieve a stable frequency, as indicated by the LOCK status flag.
+	# 5. Set up post dividers and turn them on.
+	#
+	# # Divider params for 48 MHz:
+	#
+	# $ cd pico-sdk
+	# $ src/rp2_common/hardware_clocks/scripts/vcocalc.py 48
+	# Requested: 48.0 MHz
+	# Achieved:  48.0 MHz
+	# REFDIV:    1
+	# FBDIV:     120 (VCO = 1440.0 MHz)
+	# PD1:       6
+	# PD2:       5
+	#
+
+	li	t0, PLL_SYS_BASE
+
+	# set REFDIR
+	lw	t1, PLL_CS_OFFSET(t0)
+	li	t2, ~PLL_CS_REFDIV_BITS
+	and	t1, t1, t2
+	ori	t1, t1, 1			# REFDIR
+	sw	t1, PLL_CS_OFFSET(t0)
+
+	# set FBDIV
+	li	t1, 120			# FBDIV
+	sw	t1, PLL_FBDIV_INT_OFFSET(t0)
+
+	# turn on PLL
+	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
+	li	t1, PLL_PWR_PD_BITS | PLL_PWR_VCOPD_BITS
+	sw	t1, PLL_PWR_OFFSET(t2)
+
+	li	t1, PLL_CS_LOCK_BITS
+.L_wait_for_pll_to_lock:
+	lw	t2, PLL_CS_OFFSET(t0)
+	and	t2, t2, t1
+	beqz	t2, .L_wait_for_pll_to_lock 
+
+	# set post dividers: PD1=6, PD2=5
+	li	t1, 6 << 16 | 5 << 12
+	sw	t1, PLL_PRIM_OFFSET(t0)
+
+	# turn ON post divider
+	li	t1, PLL_PWR_POSTDIVPD_BITS
+	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
+	sw	t1, PLL_PWR_OFFSET(t2)
+
+	#-------------------
+	# PLL is up and running, now we need to switch CLK_SYS to it
+	#-------------------
+
+	# set AUX source to PLL_SYS
+	li	t0, CLOCKS_BASE
+	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS
+	and	t1, t1, t2
+	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS << CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+
+	# switch CLK_SYS to AUX source which is PLL_SYS now
+	li	t2, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
+	or	t1, t1, t2
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+
+.L_wait_for_clk_sys_to_switch_to_aux:
+	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)
+	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
+	and	t2, t2, t1
+	beqz	t2, .L_wait_for_clk_sys_to_switch_to_aux
+
 
 	#-------------------
 	# Enable Timer Alarm
@@ -130,49 +276,30 @@ _start:
 	li	t1, 12
 	sw	t1, TICKS_TIMER0_CYCLES_OFFSET(t0)
 
-	#-------------------
-	# GPIO
-	#-------------------
-
-	# GPIO25: select function SIO
-	li	a0, IO_BANK0_BASE
-	li	a1, IO_BANK0_GPIO25_CTRL_FUNCSEL_VALUE_SIOB_PROC_25
-	sw	a1, IO_BANK0_GPIO25_CTRL_OFFSET(a0)
-
-	# GPIO25: enable output
-	li	a0, SIO_BASE
-	li	a1, 1 << 25
-	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
-
-	# GPIO25: clear output disable and isolation bits on its pad
-	li	a4, PADS_BANK0_GPIO25_OD_BITS | PADS_BANK0_GPIO25_ISO_BITS 
-	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	sw	a4, PADS_BANK0_GPIO25_OFFSET(a5)
-
-
-#----------- HACK
-	li	t0, SIO_BASE
-	li	t1, 1 << 25
-	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
-#----------- HACK END
-
 led_loop:
+	li	a0, SIO_BASE
+	li	a1, 1
 
-	# # LED on
-	# sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
-	# call	pause
+	# LED on
+	sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
+	call	pause
 
-	# # LED off
-	# sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
-	# call	pause
-	# call	pause
-	# call	pause
+	# LED off
+	sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
+	call	pause
 
 	# Loop
 	j	led_loop
 
 pause:
-	li	s0, big_number
-1:	addi	s0, s0, -1
-	bnez	s0, 1b
+	addi	sp, sp, -4			# store TMP registers
+	sw	t0,  0(sp)
+
+	li	t0, big_number
+1:	addi	t0, t0, -1
+	bnez	t0, 1b
+
+	lw	t0,  0(sp)			# restore TMP registers
+	addi	sp, sp, 4
+
 	ret

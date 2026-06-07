@@ -104,71 +104,47 @@ machine_timer_interrupt_handler:
 
 
 machine_external_interrupt_handler:
-	addi	sp, sp, -16			# Store TMP registers
-	sw	t0,  0(sp)
-	sw	t1,  4(sp)
-	sw	t2,  8(sp)
-	sw	t3, 12(sp)
-
+	cm.push	{ra, s0-s3}, -32
 loop:
-	csrr	t0, RVCSR_MEINEXT_OFFSET		# MEINEXT value
-	li	t1, RVCSR_MEINEXT_NOIRQ_BITS		# IRQ MASK
-	la	t2, external_interrupt_table_start	# external interrupt vector table address
+	csrr	s0, RVCSR_MEINEXT_OFFSET		# MEINEXT value
+	li	s1, RVCSR_MEINEXT_NOIRQ_BITS		# IRQ MASK
+	la	s2, external_interrupt_table_start	# external interrupt vector table address
 
-	and	t3, t0, t1			# no more interrupts if not 0
-	bnez	t3, done
+	and	s3, s0, s1			# no more interrupts if not 0
+	bnez	s3, done
 
-	andi	t3, t0, RVCSR_MEINEXT_IRQ_BITS	# get IRQ number
-	add	t3, t3, t2
-	jalr	t3				# jump to IRQ handler
+	andi	s3, s0, RVCSR_MEINEXT_IRQ_BITS	# get IRQ number
+	add	s3, s3, s2
+	jalr	s3				# jump to IRQ handler
 
 	j	loop
 done:
-	lw	t0,  0(sp)			# Restore TMP registers
-	lw	t1,  4(sp)
-	lw	t2,  8(sp)
-	lw	t3, 12(sp)
-	addi	sp, sp, 16
-
+	cm.pop	{ra, s0-s3}, 32
 	mret
 
 
 irq_catchall_handler:
 	ret
 
-
 irq_0_handler:
-	addi	sp, sp, -16			# store TMP registers
-	sw	t0,  0(sp)
-	sw	t1,  4(sp)
-	sw	t2,  8(sp)
-	sw	t3, 12(sp)
+	cm.push	{ra, s0-s3}, -32
 
-	li	t0, TIMER0_BASE			# clear ALARM0
-	li	t1, TIMER_INTR_ALARM_0_BITS
-	sw	t1, TIMER_INTR_OFFSET(t0)
+	li	s0, TIMER0_BASE			# clear ALARM0
+	li	s1, TIMER_INTR_ALARM_0_BITS
+	sw	s1, TIMER_INTR_OFFSET(s0)
 
-	lw	t1, TIMER_TIMELR_OFFSET(t0)		# time for the next Alarm
-	li	t2, 500000
-	add	t1, t1, t2
-	sw	t1, TIMER_ALARM0_OFFSET(t0)
+	lw	s1, TIMER_TIMELR_OFFSET(s0)		# time for the next Alarm
+	li	s2, 500000
+	add	s1, s1, s2
+	sw	s1, TIMER_ALARM0_OFFSET(s0)
 
-	li	t0, SIO_BASE			# blink LED
-	li	t1, 1 << 25
-	lw	t2, SIO_GPIO_OUT_OFFSET(t0)
-	and	t2, t2, t1
-	beqz	t2, turn_on
-	sw	t1, SIO_GPIO_OUT_CLR_OFFSET(t0)
-	j	done1
-turn_on:
-	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
+	li	s0, SIO_BASE			# blink LED
+	li	s1, 1 << 25
+	lw	s2, SIO_GPIO_OUT_OFFSET(s0)
+	and	s2, s2, s1
+	beqz	s2, 1f
+	sw	s1, SIO_GPIO_OUT_CLR_OFFSET(s0)
+	j	2f
+1:	sw	s1, SIO_GPIO_OUT_SET_OFFSET(s0)
 
-done1:
-
-	lw	t0,  0(sp)			# restore TMP registers
-	lw	t1,  4(sp)
-	lw	t2,  8(sp)
-	lw	t3, 12(sp)
-	addi	sp, sp, 16
-
-	ret
+2:	cm.popret	{ra, s0-s3}, 32

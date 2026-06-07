@@ -7,7 +7,7 @@ TARGET_UF2 = $(PROJECT).uf2
 #AS         = riscv32-unknown-elf-gcc
 AS         = riscv32-unknown-elf-as
 LD         = riscv32-unknown-elf-ld
-AS_OPTIONS = -c -g -march=rv32imac_zba_zbb_zbkb_zbs_zicsr_zifencei
+AS_OPTIONS = -c -g -march=rv32imac_zba_zbb_zbkb_zbs_zcmp_zicsr_zifencei
 LD_OPTIONS = -T linker/linker.ld
 
 .PHONY: all
