@@ -31,17 +31,19 @@ sio_gpio_set_output_enable_mask:
 #   none
 #
 # Clobbers:
-#   t0, a0
+#   t0
 #
 .global	sio_gpio_enable_output
 sio_gpio_enable_output:
-	addi	sp, sp, -4
+	addi	sp, sp, -8
 	sw	ra, 0(sp)
+	sw	a0, 4(sp)
 
 	li	t0, 1
 	sll	a0, t0, a0			# convert GPIO number to GPIO bitmask
 	call	sio_gpio_set_output_enable_mask
 
 	lw	ra, 0(sp)
-	addi	sp, sp, 4
+	lw	a0, 4(sp)
+	addi	sp, sp, 8
 	ret

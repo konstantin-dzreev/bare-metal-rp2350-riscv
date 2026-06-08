@@ -28,6 +28,9 @@ rvcsr_disable_interrupts:
 # Outputs:
 #   none
 #
+# Clobbers:
+#   none
+#
 .global	rvcsr_enable_interrupts
 rvcsr_enable_interrupts:
 	li	t0, RVCSR_MSTATUS_MIE_BITS
@@ -72,13 +75,17 @@ rvcsr_enable_machine_interrupts:
 	ret
 
 
-# Function: rvcsr_set_interrupt_mode
-# Description: Configures the trap-vector base address and interrupt mode
-#              by writing mtvec.
+# Function: rvcsr_set_mtvec_vectored_mode
+# Description: Configures the mtvec CSR for vectored trap handling.
+#              The mtvec mode field is set to vectored mode while
+#              preserving the trap vector base address.
+#
+#              In vectored mode:
+#                Exceptions use the base address in mtvec.
+#                Interrupts jump to BASE + (4 × cause).
 #
 # Inputs:
-#   a0 = trap-vector table base address (must satisfy mtvec alignment requirements)
-#   a1 = mtvec mode value
+#   a0 = vector table base address (must satisfy mtvec alignment requirements)
 #
 # Outputs:
 #   none
@@ -86,11 +93,11 @@ rvcsr_enable_machine_interrupts:
 # Clobbers:
 #   t0
 #
-.global	rvcsr_set_interrupt_mode
-rvcsr_set_interrupt_mode:
+.global	rvcsr_set_mtvec_vectored_mode
+rvcsr_set_mtvec_vectored_mode:
 	li	t0, ~RVCSR_MTVEC_MODE_BITS
 	and	t0, t0, a0
-	or	t0, t0, a1
+	ori	t0, t0, RVCSR_MTVEC_MODE_VALUE_VECTORED
 	csrw	RVCSR_MTVEC_OFFSET, t0
 	ret
 
@@ -109,13 +116,13 @@ rvcsr_set_interrupt_mode:
 #   none
 #
 # Clobbers:
-#   a0
+#   t0
 #
 .global	rvcsr_enable_irqs_in_window
 rvcsr_enable_irqs_in_window:
-	slli	a0, a0, 16	# place the window bitmask in bits [31:16]
-	or	a0, a0, a1	# merge the windows and the index
-	csrw	RVCSR_MEIEA_OFFSET, a0
+	slli	t0, a0, 16	# place the window bitmask in bits [31:16]
+	or	t0, t0, a1	# merge the windows and the index
+	csrw	RVCSR_MEIEA_OFFSET, t0
 	ret
 
 
@@ -131,20 +138,24 @@ rvcsr_enable_irqs_in_window:
 #   none
 #
 # Clobbers:
-#   t0, t1, a0, a1
+#   t0
 #
 .global	rvcsr_enable_irq
 rvcsr_enable_irq:
-	addi	sp, sp, -4
+	addi	sp, sp, -12
 	sw	ra, 0(sp)
+	sw	a0, 4(sp)
+	sw	a1, 8(sp)
 
-	li	t0, 16
-	li	t1, 1
-	divu	a1, a0, t0	# index:  irq / 16
-	remu	a0, a0, t0	# window: 1 << (irq % 16)
-	sll	a0, t1, a0
+	srli	a1, a0, 4		# index:  irq / 16
+	li	t0, 16		# window: 1 << (irq % 16)
+	remu	a0, a0, t0
+	li	t0, 1
+	sll	a0, t0, a0
 	call	rvcsr_enable_irqs_in_window
 
 	lw	ra, 0(sp)
+	lw	a0, 4(sp)
+	lw	a1, 8(sp)
 	addi	sp, sp, 4
 	ret

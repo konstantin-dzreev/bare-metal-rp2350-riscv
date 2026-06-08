@@ -1,0 +1,60 @@
+.include "include/hardware/regs/addressmap.inc"
+.include "include/hardware/regs/clocks.inc"
+
+# Function: clocks_set_clk_ref_source_xosc
+# Description: Selects the external crystal oscillator (XOSC) as the
+#              source of clk_ref and waits for the clock mux to report
+#              the new source as active.
+#
+# Inputs:
+#   none
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0, t1, t2
+#
+.global	clocks_set_clk_ref_source_xosc
+clocks_set_clk_ref_source_xosc:
+	li	t0, CLOCKS_BASE
+	li	t1, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC	# select XOSC as the clk_ref source
+	sw	t1, CLOCKS_CLK_REF_CTRL_OFFSET(t0)
+
+1:	lw	t2, CLOCKS_CLK_REF_SELECTED_OFFSET(t0)		# read active clk_ref source
+	li	t1, 1<<CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC	# wait until XOSC is reported as selected
+	and	t2, t2, t1
+	beqz	t2, 1b
+	ret
+
+
+# Function: clocks_set_clk_sys_source_clk_ref
+# Description: Selects clk_ref as the source of clk_sys.
+#
+#              Only the SRC field is modified. The AUXSRC field is
+#              preserved so that a previously configured auxiliary
+#              clock source remains unchanged.
+#
+# Inputs:
+#   none
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0, t1, t2
+#
+.global	clocks_set_clk_sys_source_clk_ref
+clocks_set_clk_sys_source_clk_ref:
+	li	t0, CLOCKS_BASE
+	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)		# read current value of CLK_SYS_CTRL
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_SRC_BITS		# preserve AUXSRC while updating SRC
+	and	t1, t1, t2
+	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# set clk_ref as the clk_sys source
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+
+1:	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)		# read selected clock source
+	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# keep SRC bit only
+	and	t2, t2, t1
+	beqz	t2, 1b					# wait for clock switch to complete
+	ret

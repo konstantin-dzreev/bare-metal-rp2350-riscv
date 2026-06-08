@@ -16,7 +16,7 @@
 .global	unreset_subsystems
 unreset_subsystems:
 	li	t0, RESETS_BASE + REG_ALIAS_CLR_BITS
-	sw	a0, (t0)				# clear reset bits for selected subsystems
+	sw	a0, 0(t0)				# clear reset bits for selected subsystems
 
 	li	t0, RESETS_BASE
 .L_wait_until_unreset_done:
@@ -41,5 +41,5 @@ unreset_subsystems:
 .global	reset_subsystems
 reset_subsystems:
 	li	t0, RESETS_BASE + REG_ALIAS_SET_BITS
-	sw	a0, (t0)				# place selected subsystems into reset
+	sw	a0, 0(t0)				# place selected subsystems into reset
 	ret

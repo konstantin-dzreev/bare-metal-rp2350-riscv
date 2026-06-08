@@ -13,13 +13,14 @@
 #   none
 #
 # Clobbers:
-#   t0, a0
+#   t0, t1
 #
 .global	pads_bank0_gpio_clear_bits
 pads_bank0_gpio_clear_bits:
 	li	t0, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	sll	a0, a0, 2					# convert GPIO number to register offset
-	add	t0, t0, a0				# compute GPIO register address
+	mv	t1, a0
+	sll	t1, t1, 2					# convert GPIO number to register offset
+	add	t0, t0, t1				# compute GPIO register address
 	sw	a1, PADS_BANK0_GPIO0_OFFSET(t0)
 	ret
 
@@ -43,16 +44,18 @@ pads_bank0_gpio_clear_bits:
 #   none
 #
 # Clobbers:
-#   ra, a0, a1
+#   none
 #
 .global pads_bank0_enable_pad_output
 pads_bank0_enable_pad_output:
-	addi	sp, sp, -4
+	addi	sp, sp, -8
 	sw	ra, 0(sp)
+	sw	a1, 4(sp)
 
 	li	a1, PADS_BANK0_GPIO0_OD_BITS | PADS_BANK0_GPIO0_ISO_BITS # clear OD (output disable) and ISO (pad isolation)
 	call	pads_bank0_gpio_clear_bits
 
 	lw	ra, 0(sp)
-	addi	sp, sp, 4
+	lw	a1, 4(sp)
+	addi	sp, sp, 8
 	ret
