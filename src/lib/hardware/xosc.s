@@ -22,7 +22,7 @@
 # Clobbers:
 #   t0, t1, t2
 #
-.global	xosc_start
+.globl	xosc_start
 xosc_start:
 	li	t0, XOSC_BASE
 

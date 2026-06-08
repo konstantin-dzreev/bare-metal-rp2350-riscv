@@ -14,7 +14,7 @@
 # Clobbers:
 #   t0
 #
-.global	sio_gpio_set_output_enable_mask
+.globl	sio_gpio_set_output_enable_mask
 sio_gpio_set_output_enable_mask:
 	li	t0, SIO_BASE
 	sw	a0, SIO_GPIO_OE_SET_OFFSET(t0)	# enable output drivers for selected GPIOs
@@ -33,7 +33,7 @@ sio_gpio_set_output_enable_mask:
 # Clobbers:
 #   t0
 #
-.global	sio_gpio_enable_output
+.globl	sio_gpio_enable_output
 sio_gpio_enable_output:
 	addi	sp, sp, -8
 	sw	ra, 0(sp)

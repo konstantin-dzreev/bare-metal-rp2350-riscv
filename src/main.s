@@ -22,7 +22,7 @@
 .equ	big_number, 0x0000200000
 
 .section	.text
-.global	_start
+.globl	_start
 .align	2 # 4 bytes
 
 _start:
@@ -65,9 +65,9 @@ _start:
 	call	sio_gpio_enable_output
 	call	pads_bank0_enable_pad_output
 
-	# #-------------------
-	# # Change ROSC freq (optional)
-	# #-------------------
+	#-------------------
+	# Change ROSC freq (optional)
+	#-------------------
 	# li	a0, ROSC_BASE
 	# li	a1, 0xFFF
 	# lw	a2, ROSC_CTRL_OFFSET(a0)
@@ -90,93 +90,29 @@ _start:
 	# PLL
 	#--------------------------
 
-	# rp2350 datasheet: 8.6 PLL, page 582
-	#
-	# The programming sequence for the PLL is as follows:
-	# 1. Program the reference clock divider (is a divide by 1 in the RP2350 case).
-	# 2. Program the feedback divider.
-	# 3. Turn on the main power and VCO.
-	# 4. Wait for the VCO to achieve a stable frequency, as indicated by the LOCK status flag.
-	# 5. Set up post dividers and turn them on.
-	#
-	# # Divider params for 48 MHz:
+	# Divider params for 48 MHz:
 	#
 	# $ cd pico-sdk
 	# $ src/rp2_common/hardware_clocks/scripts/vcocalc.py 48
-	# Requested: 48.0 MHz
-	# Achieved:  48.0 MHz
-	# REFDIV:    1
-	# FBDIV:     120 (VCO = 1440.0 MHz)
-	# PD1:       6
-	# PD2:       5
+	#   Requested: 48.0 MHz
+	#   Achieved:  48.0 MHz
+	#   REFDIV:    1
+	#   FBDIV:     120 (VCO = 1440.0 MHz)
+	#   PD1:       6
+	#   PD2:       5
 	#
-
-# 	li	t0, PLL_SYS_BASE
-
-# 	# set REFDIR
-# 	lw	t1, PLL_CS_OFFSET(t0)
-# 	li	t2, ~PLL_CS_REFDIV_BITS
-# 	and	t1, t1, t2
-# 	ori	t1, t1, 1			# REFDIR
-# 	sw	t1, PLL_CS_OFFSET(t0)
-
-# 	# set FBDIV
-# 	li	t1, 120			# FBDIV
-# 	sw	t1, PLL_FBDIV_INT_OFFSET(t0)
-
-# 	# turn on PLL
-# 	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
-# 	li	t1, PLL_PWR_PD_BITS | PLL_PWR_VCOPD_BITS
-# 	sw	t1, PLL_PWR_OFFSET(t2)
-
-# 	li	t1, PLL_CS_LOCK_BITS
-# .L_wait_for_pll_to_lock:
-# 	lw	t2, PLL_CS_OFFSET(t0)
-# 	and	t2, t2, t1
-# 	beqz	t2, .L_wait_for_pll_to_lock 
-
-# 	# set post dividers: PD1=6, PD2=5
-# 	li	t1, 6 << 16 | 5 << 12
-# 	sw	t1, PLL_PRIM_OFFSET(t0)
-
-# 	# turn ON post divider
-# 	li	t1, PLL_PWR_POSTDIVPD_BITS
-# 	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
-# 	sw	t1, PLL_PWR_OFFSET(t2)
-
-
-
 	li	a0, 1	# REFDIV
 	li	a1, 120	# FBDIV
 	li	a2, 6	# PD1
 	li	a3, 5	# PD2
-	call	pll_start
+	call	pll_sys_start
 
+	#--------------------------
+	# Switch CLK_SYS to PLL
+	#--------------------------
 
-
-	#-------------------
-	# PLL is up and running, now we need to switch CLK_SYS to it
-	#-------------------
-
-	# set AUX source to PLL_SYS
-	li	t0, CLOCKS_BASE
-	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
-	li	t2, ~CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS
-	and	t1, t1, t2
-	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS << CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB
-	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
-
-	# switch CLK_SYS to AUX source which is PLL_SYS now
-	li	t2, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
-	or	t1, t1, t2
-	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
-
-.L_wait_for_clk_sys_to_switch_to_aux:
-	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)
-	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
-	and	t2, t2, t1
-	beqz	t2, .L_wait_for_clk_sys_to_switch_to_aux
-
+	call	clocks_set_clk_sys_aux_source_pll_sys
+	call	clocks_set_clk_sys_source_aux
 
 	#-------------------
 	# Enable Timer Alarm

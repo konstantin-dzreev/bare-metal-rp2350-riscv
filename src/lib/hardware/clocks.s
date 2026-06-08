@@ -15,7 +15,7 @@
 # Clobbers:
 #   t0, t1, t2
 #
-.global	clocks_set_clk_ref_source_xosc
+.globl	clocks_set_clk_ref_source_xosc
 clocks_set_clk_ref_source_xosc:
 	li	t0, CLOCKS_BASE
 	li	t1, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC	# select XOSC as the clk_ref source
@@ -44,7 +44,7 @@ clocks_set_clk_ref_source_xosc:
 # Clobbers:
 #   t0, t1, t2
 #
-.global	clocks_set_clk_sys_source_clk_ref
+.globl	clocks_set_clk_sys_source_clk_ref
 clocks_set_clk_sys_source_clk_ref:
 	li	t0, CLOCKS_BASE
 	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)		# read current value of CLK_SYS_CTRL
@@ -57,4 +57,65 @@ clocks_set_clk_sys_source_clk_ref:
 	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# keep SRC bit only
 	and	t2, t2, t1
 	beqz	t2, 1b					# wait for clock switch to complete
+	ret
+
+
+# Function: clocks_set_clk_sys_aux_source_pll_sys
+# Description: Selects PLL_SYS as the auxiliary clock source for
+#              clk_sys.
+#
+#              Only the AUXSRC field is modified. The primary SRC field
+#              is preserved.
+#
+#              This function does not switch clk_sys to the auxiliary
+#              source. To use PLL_SYS as the clk_sys source, the SRC
+#              field must subsequently be configured to select AUX.
+#
+# Inputs:
+#   none
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0, t1, t2
+#
+.globl	clocks_set_clk_sys_aux_source_pll_sys
+clocks_set_clk_sys_aux_source_pll_sys:
+	li	t0, CLOCKS_BASE
+	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS		# preserve SRC while updating AUXSRC.
+	and	t1, t1, t2
+	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS << CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	ret
+
+
+# Function: clocks_set_clk_sys_source_aux
+# Description: Selects the auxiliary clock source as the source of
+#              clk_sys and waits for the clock mux to report the new
+#              source as active.
+#
+#              The AUXSRC field is preserved. The auxiliary source must
+#              be configured before calling this function.
+#
+# Inputs:
+#   none
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0, t1, t2
+#
+.globl	clocks_set_clk_sys_source_aux
+clocks_set_clk_sys_source_aux:
+	li	t2, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
+	or	t1, t1, t2
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+
+1:	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)
+	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
+	and	t2, t2, t1
+	beqz	t2, 1b
 	ret

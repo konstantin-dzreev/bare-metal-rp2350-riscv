@@ -8,11 +8,10 @@
 
 .section .vector_table_block, "ax"
 .align	6 # 64 bytes
+.option	push
+.option	norvc # Disables generation of RVC (Compressed) instructions
 
-.option push
-.option norvc # Disables generation of RVC (Compressed) instructions
-
-.global	vector_table_start
+.globl	vector_table_start
 vector_table_start:
 	j	machine_exception_handler		# Cause 00, Exceptions
 	j	machine_catchall_handler		# Cause 01, Reserved
@@ -28,7 +27,7 @@ vector_table_start:
 	j	machine_external_interrupt_handler	# Cause 11, External Interrupts
 vector_table_end:
 
-.global	external_interrupt_table_start
+.globl	external_interrupt_table_start
 external_interrupt_table_start:
 	j	irq_0_handler		# IRQ 00, TIMER0_IRQ_0
 	j	irq_catchall_handler	# IRQ 01, TIMER0_IRQ_1

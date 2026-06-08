@@ -13,7 +13,7 @@
 # Clobbers:
 #   t0, t1
 #
-.global	unreset_subsystems
+.globl	unreset_subsystems
 unreset_subsystems:
 	li	t0, RESETS_BASE + REG_ALIAS_CLR_BITS
 	sw	a0, 0(t0)				# clear reset bits for selected subsystems
@@ -38,7 +38,7 @@ unreset_subsystems:
 # Clobbers:
 #   t0
 #
-.global	reset_subsystems
+.globl	reset_subsystems
 reset_subsystems:
 	li	t0, RESETS_BASE + REG_ALIAS_SET_BITS
 	sw	a0, 0(t0)				# place selected subsystems into reset

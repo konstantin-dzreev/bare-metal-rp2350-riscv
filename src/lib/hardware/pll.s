@@ -1,7 +1,7 @@
 .include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/pll.inc"
 
-# Function: pll_start
+# Function: pll_sys_start
 # Description: Configures and starts the system PLL.
 #
 #              The PLL reference divider and feedback divider are
@@ -23,10 +23,19 @@
 # Clobbers:
 #   t0, t1, t2
 #
-.global	pll_start
-pll_start:
+# rp2350 datasheet: 8.6 PLL, page 582
+#
+# The programming sequence for the PLL is as follows:
+# 1. Program the reference clock divider (is a divide by 1 in the RP2350 case).
+# 2. Program the feedback divider.
+# 3. Turn on the main power and VCO.
+# 4. Wait for the VCO to achieve a stable frequency, as indicated by the LOCK status flag.
+# 5. Set up post dividers and turn them on.
+#
+.globl	pll_sys_start
+pll_sys_start:
 	li	t0, PLL_SYS_BASE
-	lw	t1, PLL_CS_OFFSET(t0)		# configure the PLL reference divider.
+	lw	t1, PLL_CS_OFFSET(t0)		# configure the PLL dividers.
 	li	t2, ~PLL_CS_REFDIV_BITS		# clear REFDIV bits
 	and	t1, t1, t2
 	or	t1, t1, a0

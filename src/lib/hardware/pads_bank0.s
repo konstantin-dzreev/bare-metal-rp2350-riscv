@@ -15,7 +15,7 @@
 # Clobbers:
 #   t0, t1
 #
-.global	pads_bank0_gpio_clear_bits
+.globl	pads_bank0_gpio_clear_bits
 pads_bank0_gpio_clear_bits:
 	li	t0, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
 	mv	t1, a0
@@ -46,7 +46,7 @@ pads_bank0_gpio_clear_bits:
 # Clobbers:
 #   none
 #
-.global	pads_bank0_enable_pad_output
+.globl	pads_bank0_enable_pad_output
 pads_bank0_enable_pad_output:
 	addi	sp, sp, -8
 	sw	ra, 0(sp)

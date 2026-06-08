@@ -12,7 +12,7 @@
 # Clobbers:
 #   t0
 #
-.global	rvcsr_disable_interrupts
+.globl	rvcsr_disable_interrupts
 rvcsr_disable_interrupts:
 	li	t0, RVCSR_MSTATUS_MIE_BITS
 	csrc	RVCSR_MSTATUS_OFFSET, t0
@@ -31,7 +31,7 @@ rvcsr_disable_interrupts:
 # Clobbers:
 #   none
 #
-.global	rvcsr_enable_interrupts
+.globl	rvcsr_enable_interrupts
 rvcsr_enable_interrupts:
 	li	t0, RVCSR_MSTATUS_MIE_BITS
 	csrs	RVCSR_MSTATUS_OFFSET, t0
@@ -50,7 +50,7 @@ rvcsr_enable_interrupts:
 # Clobbers:
 #   t0
 #
-.global	rvcsr_disable_all_machine_interrupts
+.globl	rvcsr_disable_all_machine_interrupts
 rvcsr_disable_all_machine_interrupts:
 	csrw	RVCSR_MIE_OFFSET, zero
 	ret
@@ -69,7 +69,7 @@ rvcsr_disable_all_machine_interrupts:
 # Clobbers:
 #   none
 #
-.global	rvcsr_enable_machine_interrupts
+.globl	rvcsr_enable_machine_interrupts
 rvcsr_enable_machine_interrupts:
 	csrs	RVCSR_MIE_OFFSET, a0		
 	ret
@@ -93,7 +93,7 @@ rvcsr_enable_machine_interrupts:
 # Clobbers:
 #   t0
 #
-.global	rvcsr_set_mtvec_vectored_mode
+.globl	rvcsr_set_mtvec_vectored_mode
 rvcsr_set_mtvec_vectored_mode:
 	li	t0, ~RVCSR_MTVEC_MODE_BITS
 	and	t0, t0, a0
@@ -118,7 +118,7 @@ rvcsr_set_mtvec_vectored_mode:
 # Clobbers:
 #   t0
 #
-.global	rvcsr_enable_irqs_in_window
+.globl	rvcsr_enable_irqs_in_window
 rvcsr_enable_irqs_in_window:
 	slli	t0, a0, 16	# place the window bitmask in bits [31:16]
 	or	t0, t0, a1	# merge the windows and the index
@@ -140,7 +140,7 @@ rvcsr_enable_irqs_in_window:
 # Clobbers:
 #   t0
 #
-.global	rvcsr_enable_irq
+.globl	rvcsr_enable_irq
 rvcsr_enable_irq:
 	addi	sp, sp, -12
 	sw	ra, 0(sp)

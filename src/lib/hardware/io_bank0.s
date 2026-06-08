@@ -15,7 +15,7 @@
 # Clobbers:
 #   t0, t1
 #
-.global	io_bank0_set_gpio_function
+.globl	io_bank0_set_gpio_function
 io_bank0_set_gpio_function:
 	li	t0, IO_BANK0_BASE
 	mv	t1, a0
