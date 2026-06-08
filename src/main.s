@@ -1,17 +1,20 @@
 .include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/clocks.inc"
-.include "include/hardware/regs/io_bank0.inc"
-.include "include/hardware/regs/pads_bank0.inc"
+#.include "include/hardware/regs/io_bank0.inc"
+#.include "include/hardware/regs/pads_bank0.inc"
 .include "include/hardware/regs/pll.inc"
 .include "include/hardware/regs/rosc.inc"
 #.include "include/hardware/regs/rvcsr.inc"
-.include "include/hardware/regs/sio.inc"
+#.include "include/hardware/regs/sio.inc"
 .include "include/hardware/regs/ticks.inc"
 .include "include/hardware/regs/timer.inc"
 .include "include/hardware/regs/xosc.inc"
 
+.include "src/lib/hardware/io_bank0.s"
+.include "src/lib/hardware/pads_bank0.s"
 .include "src/lib/hardware/rvcsr.s"
 .include "src/lib/hardware/reset.s"
+.include "src/lib/hardware/sio.s"
 
 .equ	big_number, 0x0000200000
 
@@ -20,9 +23,9 @@
 .align	2 # 4 bytes
 
 _start:
-	#-------------------
-	# interrupts
-	#-------------------
+	#--------------------------
+	# Interrupts
+	#--------------------------
 
 	call	rvcsr_disable_interrupts		# disable interrupts globally
 
@@ -37,77 +40,58 @@ _start:
 
 	call	rvcsr_enable_interrupts		# enable interrupts globally
 
-	#-------------------
-	# Enable IRQ-0
-	#-------------------
-
-	# li	t0, 0x00010000
-	# csrw	RVCSR_MEIEA_OFFSET, t0		# enable IRQ-0, Timer alarm 0
-
-	# li	a0, 1
-	# li	a1, 0
-	# call	rvcsr_enable_irq_window
-
-	li	a0, 0 # IRQ0
+	li	a0, 0				# enable IRQ-0 (Timer0 Alarm) interrupt
 	call	rvcsr_enable_irq
 
-	#-------------------
+	#--------------------------
 	# Activate periferals
-	#-------------------
+	#--------------------------
 
 	li	a0, RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS | RESETS_RESET_TIMER0_BITS | RESETS_RESET_PLL_SYS_BITS
 	call	unreset_subsystems
 
-	#-------------------
+	#--------------------------
 	# GPIO
-	#-------------------
+	#--------------------------
 
-	# GPIO25: select function SIO
-	li	a0, IO_BANK0_BASE
-	li	a1, IO_BANK0_GPIO25_CTRL_FUNCSEL_VALUE_SIOB_PROC_25
-	sw	a1, IO_BANK0_GPIO25_CTRL_OFFSET(a0)
+	li	a0, 25				# GPIO 25
+	li	a1, 5				# function 5: SIO_0
+	call	io_bank0_set_gpio_function
+	li	a0, 25
+	call	sio_gpio_enable_output
+	li	a0, 25
+	call	pads_bank0_enable_pad_output
 
-	# GPIO25: enable output
-	li	a0, SIO_BASE
-	li	a1, 1 << 25
-	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
+	li	a0, 0				# GPIO 0
+	li	a1, 5				# function 5: SIO_0
+	call	io_bank0_set_gpio_function
+	li	a0, 0
+	call	sio_gpio_enable_output
+	li	a0, 0
+	call	pads_bank0_enable_pad_output
 
-	# GPIO25: clear output disable and isolation bits on its pad
-	li	a4, PADS_BANK0_GPIO25_OD_BITS | PADS_BANK0_GPIO25_ISO_BITS 
-	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	sw	a4, PADS_BANK0_GPIO25_OFFSET(a5)
+	li	a0, 2				# GPIO 2
+	li	a1, 5				# function 5: SIO_0
+	call	io_bank0_set_gpio_function
+	li	a0, 2
+	call	sio_gpio_enable_output
+	li	a0, 2
+	call	pads_bank0_enable_pad_output
 
+	# # GPIO2: select function SIO
+	# li	a0, IO_BANK0_BASE
+	# li	a1, IO_BANK0_GPIO2_CTRL_FUNCSEL_VALUE_SIOB_PROC_2
+	# sw	a1, IO_BANK0_GPIO2_CTRL_OFFSET(a0)
 
-	# GPIO0: select function SIO
-	li	a0, IO_BANK0_BASE
-	li	a1, IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SIOB_PROC_0
-	sw	a1, IO_BANK0_GPIO0_CTRL_OFFSET(a0)
+	# # GPIO2: enable output
+	# li	a0, SIO_BASE
+	# li	a1, 1 << 2
+	# sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
 
-	# GPIO0: enable output
-	li	a0, SIO_BASE
-	li	a1, 1 << 0
-	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
-
-	# GPIO0: clear output disable and isolation bits on its pad
-	li	a4, PADS_BANK0_GPIO0_OD_BITS | PADS_BANK0_GPIO0_ISO_BITS 
-	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	sw	a4, PADS_BANK0_GPIO0_OFFSET(a5)
-
-
-	# GPIO2: select function SIO
-	li	a0, IO_BANK0_BASE
-	li	a1, IO_BANK0_GPIO2_CTRL_FUNCSEL_VALUE_SIOB_PROC_2
-	sw	a1, IO_BANK0_GPIO2_CTRL_OFFSET(a0)
-
-	# GPIO2: enable output
-	li	a0, SIO_BASE
-	li	a1, 1 << 2
-	sw	a1, SIO_GPIO_OE_SET_OFFSET(a0)
-
-	# GPIO2: clear output disable and isolation bits on its pad
-	li	a4, PADS_BANK0_GPIO2_OD_BITS | PADS_BANK0_GPIO2_ISO_BITS 
-	li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	sw	a4, PADS_BANK0_GPIO2_OFFSET(a5)
+	# # GPIO2: clear output disable and isolation bits on its pad
+	# li	a4, PADS_BANK0_GPIO2_OD_BITS | PADS_BANK0_GPIO2_ISO_BITS 
+	# li	a5, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
+	# sw	a4, PADS_BANK0_GPIO2_OFFSET(a5)
 
 
 	# #-------------------
@@ -122,10 +106,10 @@ _start:
 	# or	a2, a2, a3
 	# sw	a2, ROSC_CTRL_OFFSET(a0)
 
-	#-------------------
+	#--------------------------
 	# Crystal oscillator (XOSC)
-	# Pico-2 comes with 12Mhz one
-	#-------------------
+	# Pico-2 comes with 12Mhz
+	#--------------------------
 
 	li	t0, XOSC_BASE
 
@@ -168,9 +152,9 @@ _start:
 	and	t2, t2, t1
 	beqz	t2, .L_wait_for_clk_sys_to_switch
 
-	#-------------------
+	#--------------------------
 	# PLL
-	#-------------------
+	#--------------------------
 
 	# rp2350 datasheet: 8.6 PLL, page 582
 	#

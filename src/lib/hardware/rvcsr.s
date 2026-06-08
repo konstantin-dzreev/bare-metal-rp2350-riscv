@@ -125,7 +125,7 @@ rvcsr_enable_irqs_in_window:
 #              window index, then calls rvcsr_enable_irqs_in_window().
 #
 # Inputs:
-#   a0 = IRQ number
+#   a0 = IRQ number (IRQ0 = 0, IRQ1 = 1, etc.)
 #
 # Outputs:
 #   none
@@ -140,8 +140,7 @@ rvcsr_enable_irq:
 
 	li	t0, 16
 	li	t1, 1
-
-	divu	a1, a0, t0	# index: irq / 16
+	divu	a1, a0, t0	# index:  irq / 16
 	remu	a0, a0, t0	# window: 1 << (irq % 16)
 	sll	a0, t1, a0
 	call	rvcsr_enable_irqs_in_window
