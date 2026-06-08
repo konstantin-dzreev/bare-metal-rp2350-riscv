@@ -2,7 +2,7 @@
 #.include "include/hardware/regs/clocks.inc"
 #.include "include/hardware/regs/io_bank0.inc"
 #.include "include/hardware/regs/pads_bank0.inc"
-.include "include/hardware/regs/pll.inc"
+#.include "include/hardware/regs/pll.inc"
 .include "include/hardware/regs/rosc.inc"
 #.include "include/hardware/regs/rvcsr.inc"
 #.include "include/hardware/regs/sio.inc"
@@ -13,6 +13,7 @@
 .include "src/lib/hardware/clocks.s"
 .include "src/lib/hardware/io_bank0.s"
 .include "src/lib/hardware/pads_bank0.s"
+.include "src/lib/hardware/pll.s"
 .include "src/lib/hardware/rvcsr.s"
 .include "src/lib/hardware/reset.s"
 .include "src/lib/hardware/sio.s"
@@ -110,38 +111,48 @@ _start:
 	# PD2:       5
 	#
 
-	li	t0, PLL_SYS_BASE
+# 	li	t0, PLL_SYS_BASE
 
-	# set REFDIR
-	lw	t1, PLL_CS_OFFSET(t0)
-	li	t2, ~PLL_CS_REFDIV_BITS
-	and	t1, t1, t2
-	ori	t1, t1, 1			# REFDIR
-	sw	t1, PLL_CS_OFFSET(t0)
+# 	# set REFDIR
+# 	lw	t1, PLL_CS_OFFSET(t0)
+# 	li	t2, ~PLL_CS_REFDIV_BITS
+# 	and	t1, t1, t2
+# 	ori	t1, t1, 1			# REFDIR
+# 	sw	t1, PLL_CS_OFFSET(t0)
 
-	# set FBDIV
-	li	t1, 120			# FBDIV
-	sw	t1, PLL_FBDIV_INT_OFFSET(t0)
+# 	# set FBDIV
+# 	li	t1, 120			# FBDIV
+# 	sw	t1, PLL_FBDIV_INT_OFFSET(t0)
 
-	# turn on PLL
-	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
-	li	t1, PLL_PWR_PD_BITS | PLL_PWR_VCOPD_BITS
-	sw	t1, PLL_PWR_OFFSET(t2)
+# 	# turn on PLL
+# 	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
+# 	li	t1, PLL_PWR_PD_BITS | PLL_PWR_VCOPD_BITS
+# 	sw	t1, PLL_PWR_OFFSET(t2)
 
-	li	t1, PLL_CS_LOCK_BITS
-.L_wait_for_pll_to_lock:
-	lw	t2, PLL_CS_OFFSET(t0)
-	and	t2, t2, t1
-	beqz	t2, .L_wait_for_pll_to_lock 
+# 	li	t1, PLL_CS_LOCK_BITS
+# .L_wait_for_pll_to_lock:
+# 	lw	t2, PLL_CS_OFFSET(t0)
+# 	and	t2, t2, t1
+# 	beqz	t2, .L_wait_for_pll_to_lock 
 
-	# set post dividers: PD1=6, PD2=5
-	li	t1, 6 << 16 | 5 << 12
-	sw	t1, PLL_PRIM_OFFSET(t0)
+# 	# set post dividers: PD1=6, PD2=5
+# 	li	t1, 6 << 16 | 5 << 12
+# 	sw	t1, PLL_PRIM_OFFSET(t0)
 
-	# turn ON post divider
-	li	t1, PLL_PWR_POSTDIVPD_BITS
-	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
-	sw	t1, PLL_PWR_OFFSET(t2)
+# 	# turn ON post divider
+# 	li	t1, PLL_PWR_POSTDIVPD_BITS
+# 	li	t2, PLL_SYS_BASE + REG_ALIAS_CLR_BITS
+# 	sw	t1, PLL_PWR_OFFSET(t2)
+
+
+
+	li	a0, 1	# REFDIV
+	li	a1, 120	# FBDIV
+	li	a2, 6	# PD1
+	li	a3, 5	# PD2
+	call	pll_start
+
+
 
 	#-------------------
 	# PLL is up and running, now we need to switch CLK_SYS to it

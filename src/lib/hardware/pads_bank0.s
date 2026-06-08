@@ -46,7 +46,7 @@ pads_bank0_gpio_clear_bits:
 # Clobbers:
 #   none
 #
-.global pads_bank0_enable_pad_output
+.global	pads_bank0_enable_pad_output
 pads_bank0_enable_pad_output:
 	addi	sp, sp, -8
 	sw	ra, 0(sp)
