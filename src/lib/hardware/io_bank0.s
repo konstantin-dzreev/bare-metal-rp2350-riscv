@@ -18,8 +18,7 @@
 .globl	io_bank0_set_gpio_function
 io_bank0_set_gpio_function:
 	li	t0, IO_BANK0_BASE
-	mv	t1, a0
-	sll	t1, t1, 3				# convert GPIO number to GPIO register offset (8 bytes per register)
+	sll	t1, a0, 3				# convert GPIO number to GPIO register offset (8 bytes per register)
 	add	t1, t1, t0			# compute GPIO register base address
 	sw	a1, IO_BANK0_GPIO0_CTRL_OFFSET(t1)	# select GPIO function
 	ret

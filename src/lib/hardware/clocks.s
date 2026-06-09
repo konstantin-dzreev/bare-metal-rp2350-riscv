@@ -27,7 +27,6 @@ clocks_set_clk_ref_source_xosc:
 	beqz	t2, 1b
 	ret
 
-
 # Function: clocks_set_clk_sys_source_clk_ref
 # Description: Selects clk_ref as the source of clk_sys.
 #
@@ -59,7 +58,6 @@ clocks_set_clk_sys_source_clk_ref:
 	beqz	t2, 1b					# wait for clock switch to complete
 	ret
 
-
 # Function: clocks_set_clk_sys_aux_source_pll_sys
 # Description: Selects PLL_SYS as the auxiliary clock source for
 #              clk_sys.
@@ -89,7 +87,6 @@ clocks_set_clk_sys_aux_source_pll_sys:
 	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS << CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB
 	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
 	ret
-
 
 # Function: clocks_set_clk_sys_source_aux
 # Description: Selects the auxiliary clock source as the source of

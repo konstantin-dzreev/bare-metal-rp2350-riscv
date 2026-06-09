@@ -25,7 +25,6 @@ unreset_subsystems:
 	bne	t1, a0, .L_wait_until_unreset_done	# wait until all subsystems are active
 	ret
 
-
 # Function: reset_subsystems
 # Description: Takes hardware components into reset (deactivates).
 #

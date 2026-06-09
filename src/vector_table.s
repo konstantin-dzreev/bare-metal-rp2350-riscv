@@ -30,7 +30,7 @@ vector_table_end:
 .globl	external_interrupt_table_start
 external_interrupt_table_start:
 	j	irq_0_handler		# IRQ 00, TIMER0_IRQ_0
-	j	irq_catchall_handler	# IRQ 01, TIMER0_IRQ_1
+	j	irq_1_handler		# IRQ 01, TIMER0_IRQ_1
 	j	irq_catchall_handler	# IRQ 02, TIMER0_IRQ_2
 	j	irq_catchall_handler	# IRQ 03, TIMER0_IRQ_3
 	j	irq_catchall_handler	# IRQ 04, TIMER1_IRQ_0
@@ -103,47 +103,75 @@ machine_timer_interrupt_handler:
 
 
 machine_external_interrupt_handler:
-	cm.push	{ra, s0-s3}, -32
-loop:
-	csrr	s0, RVCSR_MEINEXT_OFFSET		# MEINEXT value
-	li	s1, RVCSR_MEINEXT_NOIRQ_BITS		# IRQ MASK
-	la	s2, external_interrupt_table_start	# external interrupt vector table address
+	addi	sp, sp, -32
+	sw	ra,  0(sp)
+	sw	t0,  4(sp)			# save all temporary registers because interrupt handler subroutines
+	sw	t1,  8(sp)			# may clobber caller-saved registers
+	sw	t2, 12(sp)
+	sw	t3, 16(sp)
+	sw	t4, 20(sp)
+	sw	t5, 24(sp)
+	sw	t6, 28(sp)
 
-	and	s3, s0, s1			# no more interrupts if not 0
-	bnez	s3, done
+	la	t0, external_interrupt_table_start	# external interrupt vector table address
+1:	csrr	t1, RVCSR_MEINEXT_OFFSET		# MEINEXT value
+	bltz	t1, 2f				# exit if no more IRQs, (bit 31, RVCSR_MEINEXT_NOIRQ_BITS, can be tested with bltz)
+	andi	t1, t1, RVCSR_MEINEXT_IRQ_BITS	# get IRQ number
+	add	t1, t1, t0			# calculate IRQ handler address
+	jalr	t1				# jump to IRQ handler
+	j	1b				# loop, check for more IRQs
 
-	andi	s3, s0, RVCSR_MEINEXT_IRQ_BITS	# get IRQ number
-	add	s3, s3, s2
-	jalr	s3				# jump to IRQ handler
-
-	j	loop
-done:
-	cm.pop	{ra, s0-s3}, 32
+2:	lw	ra,  0(sp)
+	lw	t0,  4(sp)
+	lw	t1,  8(sp)
+	lw	t2, 12(sp)
+	lw	t3, 16(sp)
+	lw	t4, 20(sp)
+	lw	t5, 24(sp)
+	lw	t6, 28(sp)
+	addi	sp, sp, 32
 	mret
 
 
 irq_catchall_handler:
 	ret
 
+
 irq_0_handler:
-	cm.push	{ra, s0-s3}, -32
+	addi	sp, sp, -12
+	sw	ra, 0(sp)
+	sw	a0, 4(sp)
+	sw	a1, 8(sp)
 
-	li	s0, TIMER0_BASE			# clear ALARM0
-	li	s1, TIMER_INTR_ALARM_0_BITS
-	sw	s1, TIMER_INTR_OFFSET(s0)
+	li	a0, 0
+	call	timer0_clear_alarm_interrupt
+	li	a1, 100000
+	call	timer0_set_alarm_relative
+	li	a0, 2
+	call	sio_toggle_gpio
 
-	lw	s1, TIMER_TIMELR_OFFSET(s0)		# time for the next Alarm
-	li	s2, 500000
-	add	s1, s1, s2
-	sw	s1, TIMER_ALARM0_OFFSET(s0)
+	lw	ra, 0(sp)
+	lw	a0, 4(sp)
+	lw	a1, 8(sp)
+	addi	sp, sp, 12
+	ret
 
-	li	s0, SIO_BASE			# blink LED
-	li	s1, 1 << 25
-	lw	s2, SIO_GPIO_OUT_OFFSET(s0)
-	and	s2, s2, s1
-	beqz	s2, 1f
-	sw	s1, SIO_GPIO_OUT_CLR_OFFSET(s0)
-	j	2f
-1:	sw	s1, SIO_GPIO_OUT_SET_OFFSET(s0)
 
-2:	cm.popret	{ra, s0-s3}, 32
+irq_1_handler:
+	addi	sp, sp, -12
+	sw	ra, 0(sp)
+	sw	a0, 4(sp)
+	sw	a1, 8(sp)
+
+	li	a0, 1
+	call	timer0_clear_alarm_interrupt
+	li	a1, 500000
+	call	timer0_set_alarm_relative
+	li	a0, 25
+	call	sio_toggle_gpio
+
+	lw	ra, 0(sp)
+	lw	a0, 4(sp)
+	lw	a1, 8(sp)
+	addi	sp, sp, 12
+	ret

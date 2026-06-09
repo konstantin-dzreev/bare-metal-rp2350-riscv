@@ -18,12 +18,10 @@
 .globl	pads_bank0_gpio_clear_bits
 pads_bank0_gpio_clear_bits:
 	li	t0, PADS_BANK0_BASE + REG_ALIAS_CLR_BITS
-	mv	t1, a0
-	sll	t1, t1, 2					# convert GPIO number to register offset
+	sll	t1, a0, 2					# convert GPIO number to register offset
 	add	t0, t0, t1				# compute GPIO register address
 	sw	a1, PADS_BANK0_GPIO0_OFFSET(t0)
 	ret
-
 
 # Function: pads_bank0_enable_pad_output
 # Description: Enables the GPIO pad output path by removing pad isolation

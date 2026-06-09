@@ -1,14 +1,6 @@
-#.include "include/hardware/regs/addressmap.inc"
-#.include "include/hardware/regs/clocks.inc"
-#.include "include/hardware/regs/io_bank0.inc"
-#.include "include/hardware/regs/pads_bank0.inc"
-#.include "include/hardware/regs/pll.inc"
 .include "include/hardware/regs/rosc.inc"
-#.include "include/hardware/regs/rvcsr.inc"
-#.include "include/hardware/regs/sio.inc"
 .include "include/hardware/regs/ticks.inc"
 .include "include/hardware/regs/timer.inc"
-#.include "include/hardware/regs/xosc.inc"
 
 .include "src/lib/hardware/clocks.s"
 .include "src/lib/hardware/io_bank0.s"
@@ -17,13 +9,15 @@
 .include "src/lib/hardware/rvcsr.s"
 .include "src/lib/hardware/reset.s"
 .include "src/lib/hardware/sio.s"
+.include "src/lib/hardware/ticks.s"
+.include "src/lib/hardware/timer.s"
 .include "src/lib/hardware/xosc.s"
 
 .equ	big_number, 0x0000200000
 
 .section	.text
 .globl	_start
-.align	2 # 4 bytes
+.align	2	# 4 bytes
 
 _start:
 	#--------------------------
@@ -37,8 +31,11 @@ _start:
 	li	a0, RVCSR_MIE_MEIE_BITS		# external interrupts only
 	call	rvcsr_enable_machine_interrupts	# enable machine interrupts (IRQs only)
 	call	rvcsr_enable_interrupts		# enable interrupts globally
-	li	a0, 0				# IRQ-0 (Timer0 Alarm)
+
+	li	a0, 0				# IRQ-0 (Timer0 Alarm0)
 	call	rvcsr_enable_irq			# enable IRQ-0
+	li	a0, 1				# IRQ-1 (Timer0 Alarm1)
+	call	rvcsr_enable_irq			# enable IRQ-1
 
 	#--------------------------
 	# Activate periferals
@@ -108,62 +105,46 @@ _start:
 	call	pll_sys_start
 
 	#--------------------------
-	# Switch CLK_SYS to PLL
+	# Clocks: set CLK_SYS to AUXILARY PLL
 	#--------------------------
 
 	call	clocks_set_clk_sys_aux_source_pll_sys
 	call	clocks_set_clk_sys_source_aux
 
 	#-------------------
-	# Enable Timer Alarm
+	# Ticks: 
 	#-------------------
 
-	li	t0, TIMER0_BASE
-	lw	t1, TIMER_TIMELR_OFFSET(t0)
-	li	t2, 500000
-	add	t1, t1, t2
-	sw	t1, TIMER_ALARM0_OFFSET(t0)
-
-	li	t2, TIMER_INTE_ALARM_0_BITS		# enable alarm interrupt
-	sw	t2, TIMER_INTE_OFFSET(t0)
+	li	a0, 12			# every 1mks: 12 CLK_REF cycles at 12 MHz
+	call	ticks_set_timer0_increment_cycles
+	call	ticks_start_timer0
 
 	#-------------------
-	# Enable Timer0 Ticks: 8.5 Tick generators
+	# Timer0
 	#-------------------
 
-	li	t0, TICKS_BASE
-	li	t1, TICKS_TIMER0_CTRL_ENABLE_BITS
-	sw	t1, TICKS_TIMER0_CTRL_OFFSET(t0)
+	call	timer0_set_source_tick_generator
 
+	li	a0, 0
+	li	a1, 100000
+	call	timer0_set_alarm_relative
+	call	timer0_enable_alarm_interrupt
 
-	# configure ticks to fire every 1 mks or every 12 SYS_CLK cycles at 12 MHz
-	li	t1, 12
-	sw	t1, TICKS_TIMER0_CYCLES_OFFSET(t0)
+	li	a0, 1
+	li	a1, 500000
+	call	timer0_set_alarm_relative
+	call	timer0_enable_alarm_interrupt
 
-led_loop:
-	li	a0, SIO_BASE
-	li	a1, 1
+	#-------------------
+	# Blink
+	#-------------------
 
-	# LED on
-	sw	a1, SIO_GPIO_OUT_SET_OFFSET(a0)
+led_loop:	li	a0, 0
+	call	sio_toggle_gpio
 	call	pause
-
-	# LED off
-	sw	a1, SIO_GPIO_OUT_CLR_OFFSET(a0)
-	call	pause
-
-	# Loop
 	j	led_loop
 
-pause:
-	addi	sp, sp, -4			# store TMP registers
-	sw	t0,  0(sp)
-
-	li	t0, big_number
+pause:	li	t0, big_number
 1:	addi	t0, t0, -1
 	bnez	t0, 1b
-
-	lw	t0,  0(sp)			# restore TMP registers
-	addi	sp, sp, 4
-
 	ret

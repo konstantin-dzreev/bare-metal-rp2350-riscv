@@ -37,7 +37,6 @@ rvcsr_enable_interrupts:
 	csrs	RVCSR_MSTATUS_OFFSET, t0
 	ret
 
-
 # Function: rvcsr_disable_all_machine_interrupts
 # Description: Disables all machine-mode interrupt sources by clearing mie.
 #
@@ -54,7 +53,6 @@ rvcsr_enable_interrupts:
 rvcsr_disable_all_machine_interrupts:
 	csrw	RVCSR_MIE_OFFSET, zero
 	ret
-
 
 # Function: rvcsr_enable_machine_interrupts
 # Description: Enables one or more machine-mode interrupt sources by
@@ -73,7 +71,6 @@ rvcsr_disable_all_machine_interrupts:
 rvcsr_enable_machine_interrupts:
 	csrs	RVCSR_MIE_OFFSET, a0		
 	ret
-
 
 # Function: rvcsr_set_mtvec_vectored_mode
 # Description: Configures the mtvec CSR for vectored trap handling.
@@ -101,7 +98,6 @@ rvcsr_set_mtvec_vectored_mode:
 	csrw	RVCSR_MTVEC_OFFSET, t0
 	ret
 
-
 # Function: rvcsr_enable_irqs_in_window
 # Description: Enables one or more machine external interrupts within
 #              a specified IRQ window. The window bitmask is placed in
@@ -122,9 +118,8 @@ rvcsr_set_mtvec_vectored_mode:
 rvcsr_enable_irqs_in_window:
 	slli	t0, a0, 16	# place the window bitmask in bits [31:16]
 	or	t0, t0, a1	# merge the windows and the index
-	csrw	RVCSR_MEIEA_OFFSET, t0
+	csrs	RVCSR_MEIEA_OFFSET, t0
 	ret
-
 
 # Function: rvcsr_enable_irq
 # Description: Enables a machine external interrupt by IRQ number.

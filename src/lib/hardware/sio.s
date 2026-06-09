@@ -20,7 +20,6 @@ sio_gpio_set_output_enable_mask:
 	sw	a0, SIO_GPIO_OE_SET_OFFSET(t0)	# enable output drivers for selected GPIOs
 	ret
 
-
 # Function: sio_gpio_enable_output
 # Description: Enables the output driver for a GPIO pin.
 #
@@ -46,4 +45,27 @@ sio_gpio_enable_output:
 	lw	ra, 0(sp)
 	lw	a0, 4(sp)
 	addi	sp, sp, 8
+	ret
+
+# Function: sio_toggle_gpio
+# Description: Toggles the state of the specified GPIO output.
+#
+#              The corresponding GPIO output bit is written to the SIO GPIO_OUT_XOR
+#              register, causing the output state to invert.
+#
+# Inputs:
+# a0 = GPIO number.
+#
+# Outputs:
+# None.
+#
+# Clobbers:
+# t0, t1
+#
+.globl	sio_toggle_gpio
+sio_toggle_gpio:
+	li	t0, SIO_BASE
+	li	t1, 1
+	sll	t1, t1, a0
+	sw	t1, SIO_GPIO_OUT_XOR_OFFSET(t0)
 	ret
