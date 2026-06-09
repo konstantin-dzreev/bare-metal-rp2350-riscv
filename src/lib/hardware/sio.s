@@ -69,3 +69,20 @@ sio_toggle_gpio:
 	sll	t1, t1, a0
 	sw	t1, SIO_GPIO_OUT_XOR_OFFSET(t0)
 	ret
+
+.globl	sio_set_gpio_high
+sio_set_gpio_high:
+	li	t0, SIO_BASE
+	li	t1, 1
+	sll	t1, t1, a0
+	sw	t1, SIO_GPIO_OUT_SET_OFFSET(t0)
+	ret
+
+
+.globl	sio_set_gpio_low
+sio_set_gpio_low:
+	li	t0, SIO_BASE
+	li	t1, 1
+	sll	t1, t1, a0
+	sw	t1, SIO_GPIO_OUT_CLR_OFFSET(t0)
+	ret

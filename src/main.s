@@ -13,7 +13,7 @@
 .include "src/lib/hardware/timer.s"
 .include "src/lib/hardware/xosc.s"
 
-.equ	big_number, 0x0000200000
+.equ	big_number, 0x0000300000
 
 .section	.text
 .globl	_start
@@ -126,7 +126,7 @@ _start:
 	call	timer0_set_source_tick_generator
 
 	li	a0, 0
-	li	a1, 100000
+	li	a1, 500000
 	call	timer0_set_alarm_relative
 	call	timer0_enable_alarm_interrupt
 
@@ -139,7 +139,8 @@ _start:
 	# Blink
 	#-------------------
 
-led_loop:	li	a0, 0
+led_loop:	
+	li	a0, 0
 	call	sio_toggle_gpio
 	call	pause
 	j	led_loop

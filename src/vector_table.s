@@ -113,12 +113,15 @@ machine_external_interrupt_handler:
 	sw	t5, 24(sp)
 	sw	t6, 28(sp)
 
-	la	t0, external_interrupt_table_start	# external interrupt vector table address
-1:	csrr	t1, RVCSR_MEINEXT_OFFSET		# MEINEXT value
+	# all temporary registers have to be initialized inside the loop on every iteration
+	# because they get clobbered by IRQ handlers
+
+1:	la	t0, external_interrupt_table_start	# external interrupt vector table address
+	csrr	t1, RVCSR_MEINEXT_OFFSET		# MEINEXT value
 	bltz	t1, 2f				# exit if no more IRQs, (bit 31, RVCSR_MEINEXT_NOIRQ_BITS, can be tested with bltz)
 	andi	t1, t1, RVCSR_MEINEXT_IRQ_BITS	# get IRQ number
 	add	t1, t1, t0			# calculate IRQ handler address
-	jalr	t1				# jump to IRQ handler
+	jalr	t1				# jump to IRQ handler, temporary registers get clobbered after this call
 	j	1b				# loop, check for more IRQs
 
 2:	lw	ra,  0(sp)
@@ -145,7 +148,7 @@ irq_0_handler:
 
 	li	a0, 0
 	call	timer0_clear_alarm_interrupt
-	li	a1, 100000
+	li	a1, 50000
 	call	timer0_set_alarm_relative
 	li	a0, 2
 	call	sio_toggle_gpio
