@@ -13,7 +13,7 @@
 #   none
 #
 # Clobbers:
-#   t0, t1, t2
+#   t0, t1
 #
 .globl	clocks_set_clk_ref_source_xosc
 clocks_set_clk_ref_source_xosc:
@@ -21,10 +21,9 @@ clocks_set_clk_ref_source_xosc:
 	li	t1, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC	# select XOSC as the clk_ref source
 	sw	t1, CLOCKS_CLK_REF_CTRL_OFFSET(t0)
 
-1:	lw	t2, CLOCKS_CLK_REF_SELECTED_OFFSET(t0)		# read active clk_ref source
-	li	t1, 1<<CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC	# wait until XOSC is reported as selected
-	and	t2, t2, t1
-	beqz	t2, 1b
+1:	lw	t1, CLOCKS_CLK_REF_SELECTED_OFFSET(t0)		# read active clk_ref source
+	bext	t1, t1, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC # extract XOSC_CLKSRC bit
+	beqz	t1, 1b					# wait until the bit is set
 	ret
 
 # Function: clocks_set_clk_sys_source_clk_ref
@@ -47,15 +46,13 @@ clocks_set_clk_ref_source_xosc:
 clocks_set_clk_sys_source_clk_ref:
 	li	t0, CLOCKS_BASE
 	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)		# read current value of CLK_SYS_CTRL
-	li	t2, ~CLOCKS_CLK_SYS_CTRL_SRC_BITS		# preserve AUXSRC while updating SRC
-	and	t1, t1, t2
-	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# set clk_ref as the clk_sys source
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_SRC_BITS		# preserve AUXSRC bits while updating SRC
+	and	t1, t1, t2				# CLK_REF is 0, no need to OR anything
 	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
 
-1:	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)		# read selected clock source
-	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# keep SRC bit only
-	and	t2, t2, t1
-	beqz	t2, 1b					# wait for clock switch to complete
+1:	lw	t1, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)		# read active clk_sys source
+	bext	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF	# extract CLK_REF bit
+	beqz	t1, 1b					# wait until the bit is set
 	ret
 
 # Function: clocks_set_clk_sys_aux_source_pll_sys
@@ -82,9 +79,8 @@ clocks_set_clk_sys_source_clk_ref:
 clocks_set_clk_sys_aux_source_pll_sys:
 	li	t0, CLOCKS_BASE
 	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
-	li	t2, ~CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS		# preserve SRC while updating AUXSRC.
-	and	t1, t1, t2
-	ori	t1, t1, CLOCKS_CLK_SYS_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS << CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB
+	li	t2, ~CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS		# preserve SRC bits while updating AUXSRC.
+	and	t1, t1, t2				# CLKSRC_PLL_SYS is 0, no need to OR anything
 	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
 	ret
 
@@ -107,12 +103,12 @@ clocks_set_clk_sys_aux_source_pll_sys:
 #
 .globl	clocks_set_clk_sys_source_aux
 clocks_set_clk_sys_source_aux:
-	li	t2, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
-	or	t1, t1, t2
-	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	li	t0, CLOCKS_BASE
+	lw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)
+	bset	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_LSB			# set SRC bit to CLKSRC_CLK_SYS_AUX
+	sw	t1, CLOCKS_CLK_SYS_CTRL_OFFSET(t0)			# save changes
 
-1:	lw	t2, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)
-	li	t1, 1 << CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX
-	and	t2, t2, t1
-	beqz	t2, 1b
+1:	lw	t1, CLOCKS_CLK_SYS_SELECTED_OFFSET(t0)			# read active clk_sys source
+	bext	t1, t1, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX	# extract SRC bit
+	beqz	t1, 1b						# wait until the bit is set
 	ret

@@ -19,10 +19,9 @@ unreset_subsystems:
 	sw	a0, 0(t0)				# clear reset bits for selected subsystems
 
 	li	t0, RESETS_BASE
-.L_wait_until_unreset_done:
-	lw	t1, RESETS_RESET_DONE_OFFSET(t0)	# read reset completion status
+1:	lw	t1, RESETS_RESET_DONE_OFFSET(t0)	# read reset completion status
 	and	t1, t1, a0			# keep only requested subsystem bits
-	bne	t1, a0, .L_wait_until_unreset_done	# wait until all subsystems are active
+	bne	t1, a0, 1b			# wait until all subsystems are active
 	ret
 
 # Function: reset_subsystems

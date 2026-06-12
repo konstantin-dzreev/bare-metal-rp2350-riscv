@@ -46,14 +46,14 @@ pads_bank0_gpio_clear_bits:
 #
 .globl	pads_bank0_enable_pad_output
 pads_bank0_enable_pad_output:
-	addi	sp, sp, -8
+	addi	sp, sp, -8					# save registers that will change
 	sw	ra, 0(sp)
 	sw	a1, 4(sp)
 
-	li	a1, PADS_BANK0_GPIO0_OD_BITS | PADS_BANK0_GPIO0_ISO_BITS # clear OD (output disable) and ISO (pad isolation)
+	li	a1, PADS_BANK0_GPIO0_OD_BITS | PADS_BANK0_GPIO0_ISO_BITS	# clear OD (output disable) and ISO (pad isolation)
 	call	pads_bank0_gpio_clear_bits
 
-	lw	ra, 0(sp)
+	lw	ra, 0(sp)						# restore registers
 	lw	a1, 4(sp)
 	addi	sp, sp, 8
 	ret

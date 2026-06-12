@@ -26,7 +26,7 @@
 xosc_start:
 	li	t0, XOSC_BASE
 
-	li	t1, 94				# configure startup delay: 12 MHz × 2 ms ÷ 256 ≈ 94.
+	li	t1, 188				# configure startup delay: 12 MHz × 4 ms ÷ 256 ≈ 188.
 	sw	t1, XOSC_STARTUP_OFFSET(t0)
 
 	li	t1, (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB) | XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
@@ -36,5 +36,4 @@ xosc_start:
 	li	t2, XOSC_STATUS_STABLE_BITS
 	and	t1, t1, t2
 	beqz	t1, 1b
-
 	ret
