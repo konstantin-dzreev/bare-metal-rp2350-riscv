@@ -1,3 +1,5 @@
+.section .text
+
 .include "include/hardware/regs/addressmap.inc"
 .include "include/hardware/regs/pads_bank0.inc"
 

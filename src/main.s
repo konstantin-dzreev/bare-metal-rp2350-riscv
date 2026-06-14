@@ -1,3 +1,6 @@
+.section	.text
+.align	2	# 4 bytes
+
 .include "include/hardware/regs/rosc.inc"
 .include "include/hardware/regs/ticks.inc"
 .include "include/hardware/regs/timer.inc"
@@ -15,10 +18,7 @@
 
 .equ	big_number, 0x0000300000
 
-.section	.text
 .globl	_start
-.align	2	# 4 bytes
-
 _start:
 	#--------------------------
 	# Interrupts
@@ -102,6 +102,10 @@ _start:
 	li	a1, 120	# FBDIV
 	li	a2, 6	# PD1
 	li	a3, 5	# PD2
+	# li	a0, 1	# REFDIV # 300 MHz
+	# li	a1, 125	# FBDIV
+	# li	a2, 5	# PD1
+	# li	a3, 1	# PD2
 	call	pll_sys_start
 
 	#--------------------------

@@ -1,3 +1,5 @@
+.section .text
+
 .include "include/hardware/regs/rvcsr.inc"
 
 # Function: rvcsr_disable_interrupts
