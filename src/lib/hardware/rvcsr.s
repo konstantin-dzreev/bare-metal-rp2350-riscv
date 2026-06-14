@@ -152,5 +152,5 @@ rvcsr_enable_irq:
 	lw	ra, 0(sp)
 	lw	a0, 4(sp)
 	lw	a1, 8(sp)
-	addi	sp, sp, 4
+	addi	sp, sp, 12
 	ret
