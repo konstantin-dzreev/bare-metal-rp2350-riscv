@@ -133,7 +133,7 @@ rvcsr_enable_irqs_in_window:
 #   none
 #
 # Clobbers:
-#   t0
+#   none
 #
 .globl	rvcsr_enable_irq
 rvcsr_enable_irq:
@@ -142,11 +142,9 @@ rvcsr_enable_irq:
 	sw	a0, 4(sp)
 	sw	a1, 8(sp)
 
+	andi	a0, a0, 0xF	# window: 1 << (irq % 16)
+	bset	a0, zero, a0
 	srli	a1, a0, 4		# index:  irq / 16
-	li	t0, 16		# window: 1 << (irq % 16)
-	remu	a0, a0, t0
-	li	t0, 1
-	sll	a0, t0, a0
 	call	rvcsr_enable_irqs_in_window
 
 	lw	ra, 0(sp)
