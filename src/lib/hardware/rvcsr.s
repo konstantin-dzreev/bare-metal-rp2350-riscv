@@ -155,7 +155,22 @@ rvcsr_enable_irq:
 	addi	sp, sp, 12
 	ret
 
-
+# Function: rvcsr_trigger_irqs_in_window
+# Description: Triggers one or more machine external interrupts within
+#              a specified IRQ window. The window bitmask is placed in
+#              bits [31:16] and the window index is placed in bits [15:0]
+#              before writing the combined value to the MEIFA CSR.
+#
+# Inputs:
+#   a0 = IRQ window bitmask
+#   a1 = IRQ window index
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   t0
+#
 .globl	rvcsr_trigger_irqs_in_window
 rvcsr_trigger_irqs_in_window:
 	slli	t0, a0, 16	# place the window bitmask in bits [31:16]
@@ -163,7 +178,20 @@ rvcsr_trigger_irqs_in_window:
 	csrs	RVCSR_MEIFA_OFFSET, t0
 	ret
 
-
+# Function: rvcsr_trigger_irq
+# Description: Triggers a machine external interrupt by IRQ number.
+#              Converts the IRQ number into a window bitmask and
+#              window index, then calls rvcsr_trigger_irqs_in_window().
+#
+# Inputs:
+#   a0 = IRQ number (IRQ0 = 0, IRQ1 = 1, etc.)
+#
+# Outputs:
+#   none
+#
+# Clobbers:
+#   none
+#
 .globl	rvcsr_trigger_irq
 rvcsr_trigger_irq:
 	addi	sp, sp, -12

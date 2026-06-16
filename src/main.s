@@ -107,7 +107,6 @@ _start:
 	call	timer0_enable_alarm_interrupt		# enable timer0 alarm0
 	call	rvcsr_trigger_irq			# trigger IRQ0 once to start counting
 
-
 	#-------------------
 	# Loop forever
 	#-------------------

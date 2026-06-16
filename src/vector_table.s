@@ -145,8 +145,10 @@ irq_0_handler:
 
 	li	a0, 0
 	call	timer0_clear_alarm_interrupt
+
 	li	a1, 500000
 	call	timer0_set_alarm_relative
+
 	li	a0, 25
 	call	sio_toggle_gpio
 
