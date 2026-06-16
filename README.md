@@ -1,10 +1,41 @@
-# Raspberry Pi Pico 2 – Bare-Metal RISC-V Assembly LED Blink
+# Raspberry Pi Pico 2 – Bare-Metal RISC-V Assembly Interrupt-Driven LED Blink
 
-This repository contains a minimal bare-metal LED blink application for the Raspberry Pi Pico 2, written in RISC-V assembly.
+This application shows basic RP2350 bring-up and interrupt handling. It:
+- Installs the interrupt vector table.
+- Releases the required peripherals from reset.
+- Switches the reference clock from ROSC to the 12 MHz XOSC.
+- Configures and enables the system PLL (optional).
+- Switches the system clock to PLL_SYS at 150 MHz (optional).
+- Configures the tick generator for a 1 μs tick period.
+- Programs TIMER0 ALARM0 to generate an interrupt every 500 ms.
+- Toggles the onboard LED from the TIMER0 interrupt handler.
 
-Both the source code and this README include references to, and excerpts from, the official RP2350 datasheet: https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf
+## Build
 
-## Install RISC-V Toolchain
+```bash
+$ make          # assembles and links; produces build/*.elf and build/*.uf2
+$ make clean    # removes the build directory
+```
+
+### Flash via UF2 (BOOTSEL mode)
+
+Hold the BOOTSEL button while connecting the Pico 2 to USB, then:
+
+```bash
+$ make deploy   # uses picotool to load and start the UF2
+```
+
+Or copy `build/*.uf2` to the `RP2350` USB mass-storage drive manually.
+
+### Flash via Debug Probe (OpenOCD)
+
+```bash
+$ make program  # programs and resets via OpenOCD + CMSIS-DAP
+```
+
+## Toolchain Setup
+
+### Install RISC-V Toolchain
 
 Download and install the Raspberry Pi–provided RISC-V toolchain:
 
@@ -14,7 +45,7 @@ $ mkdir -p /home/$USER/source/tools/riscv-toolchain-15-x86_64-lin
 $ tar xf riscv-toolchain-15-x86_64-lin.tar.gz -C /home/$USER/source/tools/riscv-toolchain-15-x86_64-lin
 ```
 
-## Install OpenOCD (Open On-Chip Debugger)
+### Install OpenOCD (Open On-Chip Debugger)
 https://openocd.org/doc-release/README
 
 For on-chip debugging, install the Raspberry Pi–provided OpenOCD build:
@@ -25,7 +56,9 @@ $ mkdir -p /home/$USER/source/tools/openocd-0.12.0+dev-x86_64-lin
 $ tar xf openocd-0.12.0+dev-x86_64-lin.tar.gz -C /home/$USER/source/tools/openocd-0.12.0+dev-x86_64-lin
 ```
 
-## Install Picotool
+### Install Picotool
+
+Picotool is a command-line utility for RP2040 and RP2350 devices that can inspect firmware images, program flash memory, query connected boards, and reboot devices into normal or BOOTSEL mode.
 
 ```bash
 $ wget https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/picotool-2.2.0-a4-x86_64-lin.tar.gz
@@ -33,7 +66,7 @@ $ mkdir -p /home/$USER/source/tools/picotool-2.2.0-a4-x86_64-lin
 $ tar xf picotool-2.2.0-a4-x86_64-lin.tar.gz -C /home/$USER/source/tools/picotool-2.2.0-a4-x86_64-lin
 ```
 
-## Environment Setup
+### Environment Setup
 
 Add binaries to your PATH, export the OpenOCD scripts directory, and reload your shell configuration:
 
@@ -48,7 +81,6 @@ EOT
 ```
 
 ## Hardware Debugging
-
 ### `udev` Rules (No `sudo` Required)
 
 To allow OpenOCD to access the Raspberry Pi Debug Probe without requiring sudo, install the following udev rule:
@@ -112,7 +144,9 @@ continue
 
 ## Documentation
 
+- RP2350 Datasheet: https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf
 - Assembler: https://sourceware.org/binutils/docs/as/
 - Linker: https://sourceware.org/binutils/docs/ld/
 - Picotool: https://github.com/raspberrypi/picotool
-- Style guide: https://opentitan.org/book/doc/contributing/style_guides/asm_coding_style.html
+- RISC-V ISA specification: https://riscv.org/technical/specifications/
+- Assembly style guide: https://opentitan.org/book/doc/contributing/style_guides/asm_coding_style.html

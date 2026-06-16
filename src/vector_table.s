@@ -1,15 +1,13 @@
-.include "include/hardware/regs/addressmap.inc"
+.section .vector_table_block, "ax"
+
 .include "include/hardware/regs/rvcsr.inc"
-.include "include/hardware/regs/sio.inc"
-.include "include/hardware/regs/timer.inc"
 
 # VECTOR TABLE
 # 3.8.4. Interrupts and exceptions
 
-.section .vector_table_block, "ax"
-.align	6 # 64 bytes
+.align	6	# 64 bytes
 .option	push
-.option	norvc # Disables generation of RVC (Compressed) instructions
+.option	norvc	# Disables generation of RVC (Compressed) instructions
 
 .globl	vector_table_start
 vector_table_start:
@@ -30,7 +28,7 @@ vector_table_end:
 .globl	external_interrupt_table_start
 external_interrupt_table_start:
 	j	irq_0_handler		# IRQ 00, TIMER0_IRQ_0
-	j	irq_1_handler		# IRQ 01, TIMER0_IRQ_1
+	j	irq_catchall_handler	# IRQ 01, TIMER0_IRQ_1
 	j	irq_catchall_handler	# IRQ 02, TIMER0_IRQ_2
 	j	irq_catchall_handler	# IRQ 03, TIMER0_IRQ_3
 	j	irq_catchall_handler	# IRQ 04, TIMER1_IRQ_0
@@ -82,7 +80,6 @@ external_interrupt_table_start:
 	j	irq_catchall_handler	# IRQ 50, SPAREIRQ_IRQ_4
 	j	irq_catchall_handler	# IRQ 51, SPAREIRQ_IRQ_5
 external_interrupt_table_end:
-
 .option	pop
 
 
@@ -147,26 +144,6 @@ irq_0_handler:
 	sw	a1, 8(sp)
 
 	li	a0, 0
-	call	timer0_clear_alarm_interrupt
-	li	a1, 50000
-	call	timer0_set_alarm_relative
-	li	a0, 2
-	call	sio_toggle_gpio
-
-	lw	ra, 0(sp)
-	lw	a0, 4(sp)
-	lw	a1, 8(sp)
-	addi	sp, sp, 12
-	ret
-
-
-irq_1_handler:
-	addi	sp, sp, -12
-	sw	ra, 0(sp)
-	sw	a0, 4(sp)
-	sw	a1, 8(sp)
-
-	li	a0, 1
 	call	timer0_clear_alarm_interrupt
 	li	a1, 500000
 	call	timer0_set_alarm_relative

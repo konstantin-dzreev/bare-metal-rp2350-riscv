@@ -154,3 +154,30 @@ rvcsr_enable_irq:
 	lw	a1, 8(sp)
 	addi	sp, sp, 12
 	ret
+
+
+.globl	rvcsr_trigger_irqs_in_window
+rvcsr_trigger_irqs_in_window:
+	slli	t0, a0, 16	# place the window bitmask in bits [31:16]
+	or	t0, t0, a1	# merge the windows and the index
+	csrs	RVCSR_MEIFA_OFFSET, t0
+	ret
+
+
+.globl	rvcsr_trigger_irq
+rvcsr_trigger_irq:
+	addi	sp, sp, -12
+	sw	ra, 0(sp)
+	sw	a0, 4(sp)
+	sw	a1, 8(sp)
+
+	andi	a0, a0, 0xF	# window: 1 << (irq % 16)
+	bset	a0, zero, a0
+	srli	a1, a0, 4		# index:  irq / 16
+	call	rvcsr_trigger_irqs_in_window
+
+	lw	ra, 0(sp)
+	lw	a0, 4(sp)
+	lw	a1, 8(sp)
+	addi	sp, sp, 12
+	ret

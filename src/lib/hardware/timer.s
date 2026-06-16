@@ -43,10 +43,10 @@ timer0_set_source_tick_generator:
 .globl	timer0_set_alarm_relative
 timer0_set_alarm_relative:
 	li	t0, TIMER0_BASE
-	lw	t1, TIMER_TIMELR_OFFSET(t0)	# calculate the target alarm time.
+	lw	t1, TIMER_TIMELR_OFFSET(t0)	# calculate the target alarm time
 	add	t1, t1, a1
 
-	sll	t2, a0, 2			# calculate alarm offset by its number:
+	sll	t2, a0, 2			# calculate alarm offset by its number
 	add	t2, t2, t0
 
 	sw	t1, TIMER_ALARM0_OFFSET(t2)	# program ALARM
