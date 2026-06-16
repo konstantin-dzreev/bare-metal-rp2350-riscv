@@ -34,8 +34,8 @@ xosc_start:
 	li	t1, (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB) | XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
 	sw	t1, XOSC_CTRL_OFFSET(t0)		# enable the crystal oscillator in the 1-15 MHz frequency range
 
-1:	lw	t1, XOSC_STATUS_OFFSET(t0)		# wait until the XOSC stabilizes
-	li	t2, XOSC_STATUS_STABLE_BITS
-	and	t1, t1, t2
-	beqz	t1, 1b
+	li	t1, XOSC_STATUS_STABLE_BITS
+1:	lw	t2, XOSC_STATUS_OFFSET(t0)		# wait until the XOSC stabilizes
+	and	t2, t2, t1
+	beqz	t2, 1b
 	ret

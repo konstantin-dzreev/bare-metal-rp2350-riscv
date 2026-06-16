@@ -1,10 +1,6 @@
 .section	.text
 .align	2	# 4 bytes
 
-.include "include/hardware/regs/rosc.inc"
-.include "include/hardware/regs/ticks.inc"
-.include "include/hardware/regs/timer.inc"
-
 .include "src/lib/hardware/clocks.s"
 .include "src/lib/hardware/io_bank0.s"
 .include "src/lib/hardware/pads_bank0.s"
@@ -26,8 +22,10 @@ _start:
 
 	call	rvcsr_disable_interrupts		# disable interrupts globally
 	call	rvcsr_disable_all_machine_interrupts	# disable all machine-mode interrupts
+
 	la	a0, vector_table_start		# vector table address
 	call	rvcsr_set_mtvec_vectored_mode		# set vectored mode interrupts
+
 	li	a0, RVCSR_MIE_MEIE_BITS		# external interrupts only
 	call	rvcsr_enable_machine_interrupts	# enable machine interrupts (IRQs only)
 	call	rvcsr_enable_interrupts		# enable interrupts globally
