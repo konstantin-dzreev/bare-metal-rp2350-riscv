@@ -1,7 +1,7 @@
 .section .text
 
-.include "include/hardware/regs/addressmap.inc"
-.include "include/hardware/regs/clocks.inc"
+.include	"include/hardware/regs/addressmap.inc"
+.include	"include/hardware/regs/clocks.inc"
 
 # Function: clocks_set_clk_ref_source_xosc
 # Description: Selects the external crystal oscillator (XOSC) as the

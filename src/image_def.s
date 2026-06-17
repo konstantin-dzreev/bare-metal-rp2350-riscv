@@ -1,5 +1,5 @@
-.include "include/boot/picobin.inc"
-.include "include/hardware/regs/addressmap.inc"
+.include	"include/boot/picobin.inc"
+.include	"include/hardware/regs/addressmap.inc"
 
 # IMAGE_DEF
 # 
@@ -18,7 +18,7 @@
 # • the last item must have type PICOBIN_BLOCK_ITEM_2BS_LAST and specify the correct full length of the block
 # • it must end with the 4 byte magic footer, PICOBIN_BLOCK_MARKER_END (0xab123579)
 
-.section .image_def_block, "a"
+.section	.image_def_block, "a"
 
 # Image deinition block HEADER
 image_def_block_start:
@@ -28,22 +28,21 @@ image_def_block_items_start:
 	# BLOCK ITEM: Image definition
 	# 5.9.3.1. IMAGE_DEF item
 	.byte	PICOBIN_BLOCK_ITEM_1BS_IMAGE_TYPE
-	.byte	0x01          # Block size in words
+	.byte	0x01	# block size in words
 	.hword	PICOBIN_IMAGE_TYPE_IMAGE_TYPE_EXE | (PICOBIN_IMAGE_TYPE_EXE_SECURITY_S << PICOBIN_IMAGE_TYPE_EXE_SECURITY_LSB) | (PICOBIN_IMAGE_TYPE_EXE_CPU_RISCV << PICOBIN_IMAGE_TYPE_EXE_CPU_LSB) | (PICOBIN_IMAGE_TYPE_EXE_CHIP_RP2350 << PICOBIN_IMAGE_TYPE_EXE_CHIP_LSB)
 
 	# BLOCK ITEM: Entry point (optional)
 	.byte	PICOBIN_BLOCK_ITEM_1BS_ENTRY_POINT
-	.byte	0x03          # Block size in words
-	.hword	0x00          # pad
-	.word	_start        # Inital PC (runtime) address (aka entry point)
-	.word	SRAM_END      # Initial SP address (aka stack pointer)
+	.byte	0x03	# block size in words
+	.hword	0x00	# pad
+	.word	_start	# inital PC (runtime) address (aka entry point)
+	.word	SRAM_END	# initial SP address (aka stack pointer)
 image_def_block_items_end:
 
 	# BLOCK ITEM: Last item
 	.byte	PICOBIN_BLOCK_ITEM_2BS_LAST
-	.hword	(image_def_block_end - image_def_block_start - 16) / 4  # size of all prev items in words
-	.byte	0x00          # pad
-	# LINK: Relative position in bytes of next block HEADER relative to this block’s HEADER (a single block loop has 0 here)
-	.word	0x00
+	.hword	(image_def_block_end - image_def_block_start - 16) / 4	# size of all prev items in words
+	.byte	0x00	# pad
+	.word	0x00	# LINK: Relative position in bytes of next block HEADER relative to this block’s HEADER (a single block loop has 0 here)
 	.word	PICOBIN_BLOCK_MARKER_END
 image_def_block_end:

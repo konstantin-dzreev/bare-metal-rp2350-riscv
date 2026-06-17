@@ -1,16 +1,16 @@
 .section	.text
 .align	2	# 4 bytes
 
-.include "src/lib/hardware/clocks.s"
-.include "src/lib/hardware/io_bank0.s"
-.include "src/lib/hardware/pads_bank0.s"
-.include "src/lib/hardware/pll.s"
-.include "src/lib/hardware/rvcsr.s"
-.include "src/lib/hardware/reset.s"
-.include "src/lib/hardware/sio.s"
-.include "src/lib/hardware/ticks.s"
-.include "src/lib/hardware/timer.s"
-.include "src/lib/hardware/xosc.s"
+.include	"src/lib/hardware/clocks.s"
+.include	"src/lib/hardware/io_bank0.s"
+.include	"src/lib/hardware/pads_bank0.s"
+.include	"src/lib/hardware/pll.s"
+.include	"src/lib/hardware/rvcsr.s"
+.include	"src/lib/hardware/reset.s"
+.include	"src/lib/hardware/sio.s"
+.include	"src/lib/hardware/ticks.s"
+.include	"src/lib/hardware/timer.s"
+.include	"src/lib/hardware/xosc.s"
 
 .equ	big_number, 0x0000300000
 

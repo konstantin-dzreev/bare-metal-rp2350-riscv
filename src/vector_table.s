@@ -1,6 +1,6 @@
 .section .vector_table_block, "ax"
 
-.include "include/hardware/regs/rvcsr.inc"
+.include	"include/hardware/regs/rvcsr.inc"
 
 # VECTOR TABLE
 # 3.8.4. Interrupts and exceptions
